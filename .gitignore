@@ -1,1 +1,40 @@
-/target
+# Generated files
+/target/
+**/target/
+
+# Rust language specific
+**/*.rs.bk
+*.pdb
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# OpenChat SDK and dependencies
+/open-chat/
+/oc-bots-tmp/
+
+# Cargo lock file for libraries (uncomment if your project is a library)
+# Cargo.lock
+
+# Debug files
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 
