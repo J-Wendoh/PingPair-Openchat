@@ -332,23 +332,32 @@ app.get('/test', (req, res) => {
 // OpenChat metadata endpoint - required for bot registration
 app.get('/.well-known/ic-domains', (req, res) => {
   res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  // The hostname must be without protocol (just the bare domain)
   res.send('pingpair-bot.onrender.com');
 });
 
 // OpenChat verification endpoint
 app.get('/.well-known/canister-info', (req, res) => {
-  const response = {
-    canisters: {
-      'ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe': {
-        name: 'PingPair Bot',
-        description: 'Connect people globally through themed cultural exchange meetups',
-        frontend_url: 'https://pingpair-bot.onrender.com',
-        icon_url: 'https://pingpair-bot.onrender.com/icon.png',
-        module_hash: ''
-      }
-    }
+  // Set appropriate headers
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  
+  // Use the exact format required by OpenChat
+  const principal = process.env.PRINCIPAL_ID || 'ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe';
+  
+  // Create the response object with the principal as the key
+  const responseObj = {};
+  responseObj[principal] = {
+    name: 'PingPair Bot',
+    description: 'Connect people globally through themed cultural exchange meetups',
+    frontend_url: 'https://pingpair-bot.onrender.com',
+    icon_url: 'https://pingpair-bot.onrender.com/icon.png',
+    module_hash: ''
   };
-  res.json(response);
+  
+  // Send the response without wrapping in "canisters"
+  res.send(JSON.stringify(responseObj));
 });
 
 // Simple icon endpoint
@@ -376,6 +385,28 @@ app.get('/health', (req, res) => {
     env: {
       node_env: process.env.NODE_ENV,
       principal_id: process.env.PRINCIPAL_ID || 'not set'
+    }
+  });
+});
+
+// Diagnostic endpoint for OpenChat registration
+app.get('/openchat-debug', (req, res) => {
+  const principal = process.env.PRINCIPAL_ID || 'ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe';
+  
+  res.json({
+    status: 'OK',
+    endpoints: {
+      webhook: '/openchat-webhook',
+      canister_info: '/.well-known/canister-info',
+      ic_domains: '/.well-known/ic-domains',
+      health: '/health'
+    },
+    principal: principal,
+    server_time: new Date().toISOString(),
+    config: {
+      cors_enabled: true,
+      domain: req.headers.host,
+      node_version: process.version
     }
   });
 });
