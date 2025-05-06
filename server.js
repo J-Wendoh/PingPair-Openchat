@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 require('dotenv').config();
+const path = require('path');
 
 const app = express();
 
@@ -182,7 +183,7 @@ function handleHelp() {
 // Handle bot events
 function handleBotEvent(event) {
   try {
-    console.log('Received event:', event);
+    console.log('Received event:', typeof event === 'string' ? event : JSON.stringify(event));
     let eventData;
     
     if (typeof event === 'string') {
@@ -191,6 +192,49 @@ function handleBotEvent(event) {
       eventData = event;
     }
     
+    // If this is OpenChat event format
+    if (eventData.event) {
+      try {
+        const ocEvent = typeof eventData.event === 'string' 
+          ? JSON.parse(eventData.event) 
+          : eventData.event;
+          
+        // Handle different OpenChat event types
+        if (ocEvent.type === 'message') {
+          return { text: "Use /pingpair commands to interact with PingPair bot!" };
+        }
+        
+        if (ocEvent.type === 'command') {
+          const command = ocEvent.command || {};
+          const commandText = command.text || '';
+          const initiator = command.initiator || 'user';
+          
+          if (commandText.startsWith('/pingpair')) {
+            const args = commandText.split(' ').slice(1);
+            const subCommand = args[0] || 'help';
+            
+            switch (subCommand) {
+              case 'start':
+                return handleStart(initiator);
+              case 'profile':
+                return handleProfile(initiator, args.slice(1));
+              case 'skip':
+                return handleSkip(initiator);
+              case 'stats':
+                return handleStats(initiator);
+              case 'timezone':
+                return handleTimezone(initiator, args.slice(1));
+              default:
+                return handleHelp();
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing OpenChat event:', error);
+      }
+    }
+    
+    // Handle our simplified format
     // Handle command
     if (eventData.type === 'command' || eventData.command) {
       const initiator = eventData.initiator || eventData.command?.initiator || 'user123';
@@ -230,11 +274,31 @@ function handleBotEvent(event) {
   }
 }
 
+// Handle preflight OPTIONS requests for CORS
+app.options('/openchat-webhook', (req, res) => {
+  console.log('OPTIONS request received');
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(200);
+});
+
 // Set up webhook to receive events from OpenChat
 app.post('/openchat-webhook', (req, res) => {
   try {
-    console.log('Webhook request body:', JSON.stringify(req.body));
+    console.log('Webhook request received');
+    console.log('Headers:', JSON.stringify(req.headers));
+    console.log('Body:', JSON.stringify(req.body));
+    
+    // Get the response from the handler
     const response = handleBotEvent(req.body);
+    
+    // Add appropriate CORS headers for OpenChat
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    console.log('Response:', JSON.stringify(response));
     res.json(response);
   } catch (error) {
     console.error('Error handling event:', error);
@@ -267,7 +331,40 @@ app.get('/test', (req, res) => {
 
 // OpenChat metadata endpoint - required for bot registration
 app.get('/.well-known/ic-domains', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
   res.send('pingpair-bot.onrender.com');
+});
+
+// OpenChat verification endpoint
+app.get('/.well-known/canister-info', (req, res) => {
+  const response = {
+    canisters: {
+      'ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe': {
+        name: 'PingPair Bot',
+        description: 'Connect people globally through themed cultural exchange meetups',
+        frontend_url: 'https://pingpair-bot.onrender.com',
+        icon_url: 'https://pingpair-bot.onrender.com/icon.png',
+        module_hash: ''
+      }
+    }
+  };
+  res.json(response);
+});
+
+// Simple icon endpoint
+app.get('/icon.png', (req, res) => {
+  const iconPath = path.join(__dirname, 'public/pingpair-icon.png');
+  
+  // Check if the file exists
+  if (fs.existsSync(iconPath)) {
+    res.sendFile(iconPath);
+  } else {
+    // If no icon file exists, send a placeholder response
+    res.setHeader('Content-Type', 'image/png');
+    
+    // Redirect to a placeholder image
+    res.redirect('https://via.placeholder.com/256x256.png?text=PingPair');
+  }
 });
 
 // Additional diagnostic endpoint
