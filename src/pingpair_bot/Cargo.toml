@@ -1,0 +1,15 @@
+[package]
+name = "pingpair_bot"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+candid = "0.8"
+ic-cdk = "0.7"
+ic-cdk-macros = "0.6"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+openchat-rust-sdk = { git = "https://github.com/open-chat-labs/open-chat-bots", branch = "main" } 

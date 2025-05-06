@@ -1,0 +1,3 @@
+service : {
+  handle_event: (record { event: text }) -> (text);
+} 

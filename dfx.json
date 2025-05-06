@@ -1,0 +1,25 @@
+{
+  "canisters": {
+    "pingpair_bot": {
+      "type": "rust",
+      "package": "pingpair_bot",
+      "candid": "src/pingpair_bot/pingpair_bot.did"
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": "npm run --silent pack-canister"
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    },
+    "ic": {
+      "providers": ["https://icp0.io"],
+      "type": "persistent"
+    }
+  },
+  "version": 1
+} 

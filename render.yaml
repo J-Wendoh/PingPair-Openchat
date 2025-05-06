@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: pingpair-bot
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PRINCIPAL_ID
+        value: ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe
+      - key: PORT
+        value: 3000 
