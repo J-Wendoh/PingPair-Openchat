@@ -182,11 +182,19 @@ function handleHelp() {
 // Handle bot events
 function handleBotEvent(event) {
   try {
-    const eventData = JSON.parse(event);
+    console.log('Received event:', event);
+    let eventData;
+    
+    if (typeof event === 'string') {
+      eventData = JSON.parse(event);
+    } else {
+      eventData = event;
+    }
     
     // Handle command
-    if (eventData.type === 'command') {
-      const { initiator, text } = eventData;
+    if (eventData.type === 'command' || eventData.command) {
+      const initiator = eventData.initiator || eventData.command?.initiator || 'user123';
+      const text = eventData.text || eventData.command?.text || '';
       
       // Check if this is a pingpair command
       if (text.startsWith('/pingpair')) {
@@ -211,25 +219,26 @@ function handleBotEvent(event) {
     }
     
     // Handle message
-    if (eventData.type === 'message') {
+    if (eventData.type === 'message' || eventData.message) {
       return { text: "Use /pingpair commands to interact with PingPair bot!" };
     }
     
-    return { text: "Unknown event type" };
+    return { text: "I'm PingPair bot! Use /pingpair commands to interact with me." };
   } catch (error) {
     console.error('Error parsing event:', error);
-    return { error: 'Failed to process event' };
+    return { error: 'Failed to process event', details: error.message };
   }
 }
 
 // Set up webhook to receive events from OpenChat
 app.post('/openchat-webhook', (req, res) => {
   try {
-    const response = handleBotEvent(JSON.stringify(req.body));
+    console.log('Webhook request body:', JSON.stringify(req.body));
+    const response = handleBotEvent(req.body);
     res.json(response);
   } catch (error) {
     console.error('Error handling event:', error);
-    res.status(500).json({ error: 'Failed to process event' });
+    res.status(500).json({ error: 'Failed to process event', details: error.message });
   }
 });
 
@@ -253,6 +262,24 @@ app.get('/test', (req, res) => {
       "/pingpair stats",
       "/pingpair timezone"
     ]
+  });
+});
+
+// OpenChat metadata endpoint - required for bot registration
+app.get('/.well-known/ic-domains', (req, res) => {
+  res.send('pingpair-bot.onrender.com');
+});
+
+// Additional diagnostic endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    users: users.size,
+    env: {
+      node_env: process.env.NODE_ENV,
+      principal_id: process.env.PRINCIPAL_ID || 'not set'
+    }
   });
 });
 
