@@ -37,4 +37,28 @@
 .Spotlight-V100
 .Trashes
 ehthumbs.db
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log
+.npm
+
+# OpenChat SDK and dependencies
+/open-chat/
+/oc-bots-tmp/
+
+# Cargo lock file for libraries (uncomment if your project is a library)
+# Cargo.lock
+
+# Debug files
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db 

@@ -1,8 +1,17 @@
 const express = require('express');
+const cors = require('cors');
 const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
+
+// Add CORS middleware
+app.use(cors({
+  origin: '*',  // Allow all origins for testing
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // PING PAIR BOT LOGIC
