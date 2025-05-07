@@ -59,6 +59,24 @@
 }
 ```
 
+#### Announcement Object
+```javascript
+{
+  id: number,
+  title: string,
+  content: string,
+  type: string,
+  createdAt: number,
+  reactions: Map<string, Set<string>>,
+  comments: Array<{
+    id: number,
+    userId: string,
+    content: string,
+    createdAt: number
+  }>
+}
+```
+
 ## Technical Decisions
 
 ### 1. Matching Algorithm
@@ -79,12 +97,20 @@
 - Interactive quiz system
 - Point rewards for engagement
 
+### 4. Community Announcements
+- In-memory storage for quick access
+- Real-time reactions and comments
+- Point rewards for engagement
+- Chronological sorting
+- Reaction aggregation
+
 ## Performance Considerations
 
 1. **Memory Management**
    - User data stored in memory for quick access
    - Regular cleanup of inactive users
    - Efficient data structures for matching
+   - Announcement caching for frequent access
 
 2. **Response Time**
    - Optimized matching algorithm

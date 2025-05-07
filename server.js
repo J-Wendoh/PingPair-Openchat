@@ -23,6 +23,10 @@ const activeMatches = new Map();
 const userStreaks = new Map();
 const userAchievements = new Map();
 
+// Community announcements data structure
+const announcements = new Map();
+let announcementCounter = 0;
+
 // Achievement definitions
 const achievements = {
   GLOBAL_CITIZEN: {
@@ -579,6 +583,168 @@ function getAchievementProgress(user) {
     `🏆 Achievement Progress:\n${progress.join('\n')}` : '';
 }
 
+// Function to create a new announcement
+function createAnnouncement(title, content, type = 'general') {
+  const id = ++announcementCounter;
+  const announcement = {
+    id,
+    title,
+    content,
+    type,
+    createdAt: Date.now(),
+    reactions: new Map(),
+    comments: []
+  };
+  announcements.set(id, announcement);
+  return announcement;
+}
+
+// Function to add a comment to an announcement
+function addComment(announcementId, userId, content) {
+  const announcement = announcements.get(announcementId);
+  if (!announcement) return null;
+  
+  const comment = {
+    id: announcement.comments.length + 1,
+    userId,
+    content,
+    createdAt: Date.now()
+  };
+  
+  announcement.comments.push(comment);
+  return comment;
+}
+
+// Function to add a reaction to an announcement
+function addReaction(announcementId, userId, reaction) {
+  const announcement = announcements.get(announcementId);
+  if (!announcement) return null;
+  
+  const userReactions = announcement.reactions.get(userId) || new Set();
+  userReactions.add(reaction);
+  announcement.reactions.set(userId, userReactions);
+  return true;
+}
+
+// Handle community announcements command
+function handleAnnouncements(userId, args) {
+  if (!users.has(userId)) {
+    return handleStart(userId);
+  }
+  
+  const user = users.get(userId);
+  user.lastActive = Date.now();
+  
+  // If no arguments, show all announcements
+  if (!args || args.length === 0) {
+    const announcementList = Array.from(announcements.values())
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map(a => {
+        const reactions = Array.from(a.reactions.values())
+          .flatMap(r => Array.from(r))
+          .reduce((acc, r) => {
+            acc[r] = (acc[r] || 0) + 1;
+            return acc;
+          }, {});
+        
+        const reactionText = Object.entries(reactions)
+          .map(([r, count]) => `${r} ${count}`)
+          .join(' ');
+        
+        return `📢 **${a.title}**\n${a.content}\n\n${reactionText}\n💬 ${a.comments.length} comments\n\nUse /pingpair announce view ${a.id} to view details`;
+      })
+      .join('\n\n');
+    
+    return {
+      text: `📢 **Community Announcements**\n\n${announcementList || 'No announcements yet'}\n\nUse /pingpair announce create [title] [content] to create a new announcement`
+    };
+  }
+  
+  // Handle subcommands
+  const subCmd = args[0];
+  
+  if (subCmd === 'create' && args.length > 2) {
+    const title = args[1];
+    const content = args.slice(2).join(' ');
+    const announcement = createAnnouncement(title, content);
+    
+    return {
+      text: `📢 **New Announcement Created**\n\nTitle: ${announcement.title}\nContent: ${announcement.content}\n\n✨ Earn 5 Strix Points for creating an announcement!`
+    };
+  }
+  
+  if (subCmd === 'view' && args.length > 1) {
+    const id = parseInt(args[1]);
+    const announcement = announcements.get(id);
+    
+    if (!announcement) {
+      return {
+        text: '❌ Announcement not found'
+      };
+    }
+    
+    const comments = announcement.comments
+      .map(c => `👤 ${c.userId}: ${c.content}`)
+      .join('\n');
+    
+    const reactions = Array.from(announcement.reactions.values())
+      .flatMap(r => Array.from(r))
+      .reduce((acc, r) => {
+        acc[r] = (acc[r] || 0) + 1;
+        return acc;
+      }, {});
+    
+    const reactionText = Object.entries(reactions)
+      .map(([r, count]) => `${r} ${count}`)
+      .join(' ');
+    
+    return {
+      text: `📢 **${announcement.title}**\n\n${announcement.content}\n\n${reactionText}\n\n💬 **Comments**\n${comments || 'No comments yet'}\n\nUse /pingpair announce comment ${id} [content] to add a comment`
+    };
+  }
+  
+  if (subCmd === 'comment' && args.length > 2) {
+    const id = parseInt(args[1]);
+    const content = args.slice(2).join(' ');
+    const comment = addComment(id, userId, content);
+    
+    if (!comment) {
+      return {
+        text: '❌ Announcement not found'
+      };
+    }
+    
+    return {
+      text: `💬 **Comment Added**\n\n${content}\n\n✨ Earn 2 Strix Points for commenting!`
+    };
+  }
+  
+  if (subCmd === 'react' && args.length > 2) {
+    const id = parseInt(args[1]);
+    const reaction = args[2];
+    const success = addReaction(id, userId, reaction);
+    
+    if (!success) {
+      return {
+        text: '❌ Announcement not found'
+      };
+    }
+    
+    return {
+      text: `✨ Added reaction ${reaction} to the announcement!`
+    };
+  }
+  
+  return {
+    text: `📢 **Announcement Commands**\n\n` +
+          `/pingpair announce - View all announcements\n` +
+          `/pingpair announce create [title] [content] - Create new announcement\n` +
+          `/pingpair announce view [id] - View announcement details\n` +
+          `/pingpair announce comment [id] [content] - Add a comment\n` +
+          `/pingpair announce react [id] [reaction] - Add a reaction`
+  };
+}
+
 // Handle bot events
 function handleBotEvent(event) {
   try {
@@ -633,6 +799,8 @@ function handleBotEvent(event) {
                 return handleDailyDigest(initiator);
               case 'quiz':
                 return handleBlockchainQuiz(initiator);
+              case 'announce':
+                return handleAnnouncements(initiator, args.slice(1));
               default:
                 return handleHelp();
             }
@@ -671,6 +839,8 @@ function handleBotEvent(event) {
             return handleDailyDigest(initiator);
           case 'quiz':
             return handleBlockchainQuiz(initiator);
+          case 'announce':
+            return handleAnnouncements(initiator, args.slice(1));
           default:
             return handleHelp();
         }
@@ -763,6 +933,10 @@ app.get('/', (req, res) => {
         {
           name: "/pingpair quiz",
           description: "Test your blockchain knowledge"
+        },
+        {
+          name: "/pingpair announce",
+          description: "Community announcements"
         }
       ],
       example_commands: ["/pingpair start", "/pingpair profile", "/pingpair stats"]
@@ -791,7 +965,8 @@ app.get('/test', (req, res) => {
       "/pingpair timezone",
       "/pingpair blockchain",
       "/pingpair digest",
-      "/pingpair quiz"
+      "/pingpair quiz",
+      "/pingpair announce"
     ]
   });
 });
@@ -901,6 +1076,10 @@ app.get('/api/v1/schema', (req, res) => {
       {
         name: "/pingpair quiz",
         description: "Test your blockchain knowledge"
+      },
+      {
+        name: "/pingpair announce",
+        description: "Community announcements"
       }
     ],
     example_commands: ["/pingpair start", "/pingpair profile", "/pingpair stats"]
@@ -951,6 +1130,10 @@ app.get('/bot_definition', (req, res) => {
       {
         name: "/pingpair quiz",
         description: "Test your blockchain knowledge"
+      },
+      {
+        name: "/pingpair announce",
+        description: "Community announcements"
       }
     ],
     example_commands: [
@@ -961,7 +1144,8 @@ app.get('/bot_definition', (req, res) => {
       "/pingpair timezone",
       "/pingpair blockchain",
       "/pingpair digest",
-      "/pingpair quiz"
+      "/pingpair quiz",
+      "/pingpair announce"
     ]
   });
 });
@@ -1117,7 +1301,8 @@ function handleHelp() {
           `/pingpair timezone - Update your timezone\n\n` +
           `🏆 Social Features:\n` +
           `/pingpair achievements - View available achievements\n` +
-          `/pingpair leaderboard - View top users\n\n` +
+          `/pingpair leaderboard - View top users\n` +
+          `/pingpair announce - Community announcements\n\n` +
           `📰 Blockchain News:\n` +
           `/pingpair blockchain [country] - Get blockchain news\n` +
           `/pingpair digest - Get daily blockchain digest\n` +
@@ -1127,6 +1312,7 @@ function handleHelp() {
           `- Maintaining streaks\n` +
           `- Reading blockchain news\n` +
           `- Taking blockchain quizzes\n` +
+          `- Creating announcements\n` +
           `- Adding interests to your profile`
   };
 }

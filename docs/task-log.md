@@ -31,6 +31,13 @@
 - 🟢 Level progression
 - 🟢 Leaderboards
 
+### Community Features
+- 🟢 Community announcements
+- 🟢 Announcement reactions
+- 🟢 Comment system
+- 🟢 Point rewards for engagement
+- 🟢 Announcement sorting
+
 ### Blockchain News
 - 🟢 Country-specific news
 - 🟢 Daily digest
@@ -60,6 +67,8 @@
 - 🔴 Group matching
 - 🔴 Language preferences
 - 🔴 Custom notifications
+- 🔴 Announcement categories
+- 🔴 Rich media support
 
 ### Technical Improvements
 - 🔴 Database integration
@@ -67,10 +76,12 @@
 - 🔴 More blockchain sources
 - 🔴 Performance optimization
 - 🔴 Security enhancements
+- 🔴 Announcement search
 
 ### User Experience
 - 🔴 Better error handling
 - 🔴 More interactive commands
 - 🔴 Enhanced feedback system
 - 🔴 Customizable settings
-- 🔴 Mobile optimization 
+- 🔴 Mobile optimization
+- 🔴 Announcement notifications 
