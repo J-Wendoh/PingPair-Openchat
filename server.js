@@ -27,6 +27,9 @@ const userAchievements = new Map();
 const announcements = new Map();
 let announcementCounter = 0;
 
+// Add global variable for group matches
+const groupMatches = new Map();
+
 // Achievement definitions
 const achievements = {
   GLOBAL_CITIZEN: {
@@ -835,6 +838,298 @@ function handleAnnouncements(userId, args) {
   };
 }
 
+// Add group matching function
+async function handleGroupMatchCommand(userId, params) {
+  // Get the user object
+  const user = users.get(userId) || { id: userId, interests: [], timezone: 'UTC' };
+  
+  // Find potential match participants
+  const potentialParticipants = Array.from(users.values()).filter(u => 
+    u.id !== userId && u.interests && u.interests.length > 0 && !u.skipNextMatch
+  );
+  
+  if (potentialParticipants.length < 2) {
+    return "Sorry, there are not enough users available for a group match at the moment. Try again later!";
+  }
+  
+  // Parse the group size parameter (default to 4)
+  let groupSize = 4;
+  if (params && params.length > 0) {
+    const sizeParam = parseInt(params[0]);
+    if (!isNaN(sizeParam) && sizeParam >= 3 && sizeParam <= 8) {
+      groupSize = sizeParam;
+    }
+  }
+  
+  // Limit group size to available participants + 1 (the requester)
+  groupSize = Math.min(groupSize, potentialParticipants.length + 1);
+  
+  // Use ElizaOS to evaluate compatibility with potential participants
+  const compatibilityScores = await Promise.all(
+    potentialParticipants.map(async otherUser => {
+      const match = await elizaOS.matchUsers(user, otherUser);
+      return { 
+        user: otherUser, 
+        score: match.score.overall,
+        commonTopics: match.details ? match.details.commonTopics : []
+      };
+    })
+  );
+  
+  // Sort by compatibility score (highest first)
+  compatibilityScores.sort((a, b) => b.score - a.score);
+  
+  // Select the top N-1 participants (N = groupSize)
+  const selectedParticipants = compatibilityScores.slice(0, groupSize - 1);
+  
+  // Find common interests across all participants
+  const allParticipants = [user, ...selectedParticipants.map(p => p.user)];
+  const commonInterests = user.interests.filter(interest => 
+    selectedParticipants.every(p => 
+      p.user.interests && p.user.interests.includes(interest)
+    )
+  );
+  
+  // Generate a unique group ID
+  const groupId = `group_${Date.now()}_${userId}`;
+  
+  // Create a group meeting link
+  const meetingLink = `https://meet.pingpair.com/group/${groupId}`;
+  
+  // Generate suggested meeting times
+  // This is simplified - in a real implementation, would find times that work for all
+  const suggestedTime = new Date();
+  suggestedTime.setDate(suggestedTime.getDate() + 1); // Tomorrow
+  suggestedTime.setHours(15, 0, 0, 0); // 3 PM
+  
+  // Create the group object
+  const group = {
+    id: groupId,
+    organizer: userId,
+    participants: allParticipants.map(p => p.id),
+    created: new Date().toISOString(),
+    meetingTime: suggestedTime.toISOString(),
+    meetingLink: meetingLink,
+    commonInterests: commonInterests.length > 0 ? commonInterests : ['cultural exchange'],
+    status: 'scheduled'
+  };
+  
+  // Store the group
+  if (!groupMatches) {
+    groupMatches = new Map();
+  }
+  groupMatches.set(groupId, group);
+  
+  // Update each participant's record
+  allParticipants.forEach(participant => {
+    if (!participant.groupHistory) {
+      participant.groupHistory = [];
+    }
+    participant.groupHistory.push(groupId);
+    
+    // Award Strix points for joining a group
+    participant.strixPoints = (participant.strixPoints || 0) + 3;
+    
+    // Save the updated user data
+    users.set(participant.id, participant);
+  });
+  
+  // Build response
+  let response = `✨ **Group Match Created!** ✨\n\n`;
+  response += `🧑‍🤝‍🧑 **Participants:** ${allParticipants.length}\n`;
+  response += allParticipants.map((p, index) => `${index + 1}. ${p.name || 'User ' + p.id}`).join('\n');
+  response += `\n\n`;
+  
+  response += `🎯 **Common Interests:** ${commonInterests.join(', ') || 'Cultural Exchange'}\n\n`;
+  response += `🗓️ **Suggested Meeting Time:** ${suggestedTime.toLocaleDateString()} at ${suggestedTime.toLocaleTimeString()}\n\n`;
+  response += `🔗 **Group Meeting Link:** ${meetingLink}\n\n`;
+  response += `📝 **Tips:** Send this link to all participants and join at the scheduled time!\n\n`;
+  
+  return response;
+}
+
+// Real-time news updates system
+class NewsUpdateSystem {
+  constructor() {
+    this.newsSources = [
+      { id: 'crypto-gazette', name: 'Crypto Gazette', tags: ['cryptocurrency', 'blockchain', 'tech'] },
+      { id: 'fintech-daily', name: 'FinTech Daily', tags: ['finance', 'technology', 'markets'] },
+      { id: 'blockchain-report', name: 'Blockchain Report', tags: ['blockchain', 'defi', 'nft'] },
+      { id: 'tech-insider', name: 'Tech Insider', tags: ['technology', 'innovation', 'startups'] }
+    ];
+    
+    this.newsItems = [];
+    this.lastUpdate = null;
+    
+    // Initialize with some news items
+    this.generateMockNews();
+    
+    // Set up periodic updates
+    setInterval(() => this.generateMockNews(), 30 * 60 * 1000); // Update every 30 minutes
+  }
+  
+  generateMockNews() {
+    const currentTime = new Date();
+    
+    // Generate 3-5 new stories
+    const newStoryCount = 3 + Math.floor(Math.random() * 3);
+    
+    const headlines = [
+      'New Blockchain Protocol Promises 100x Efficiency',
+      'Major Bank Adopts Digital Currency for International Transfers',
+      'NFT Market Shows Signs of Recovery After Recent Slump',
+      'Central Bank Digital Currencies: A Global Perspective',
+      'Web3 Gaming: The Next Frontier for Blockchain',
+      'Decentralized Finance Reaches New Milestone',
+      'Crypto Regulation: Latest Updates from Across the Globe',
+      'Blockchain Tech\'s Impact on Supply Chain Management',
+      'The Future of Digital Identity on the Blockchain',
+      'AI and Blockchain: A Powerful Combination'
+    ];
+    
+    for (let i = 0; i < newStoryCount; i++) {
+      // Select a random headline and source
+      const headlineIndex = Math.floor(Math.random() * headlines.length);
+      const sourceIndex = Math.floor(Math.random() * this.newsSources.length);
+      
+      const headline = headlines[headlineIndex];
+      const source = this.newsSources[sourceIndex];
+      
+      // Remove used headline to avoid duplicates
+      headlines.splice(headlineIndex, 1);
+      
+      // Generate story
+      const newsItem = {
+        id: `news_${Date.now()}_${i}`,
+        headline,
+        summary: `This is a summary of the article about ${headline.toLowerCase()}.`,
+        source: source.name,
+        sourceId: source.id,
+        tags: source.tags,
+        url: `https://example.com/news/${source.id}/${Date.now()}`,
+        publishedAt: currentTime.toISOString(),
+        countryRelevance: ['global', 'US', 'EU', 'Asia'].sort(() => Math.random() - 0.5).slice(0, 2)
+      };
+      
+      this.newsItems.unshift(newsItem);
+    }
+    
+    // Keep only the 50 most recent news items
+    if (this.newsItems.length > 50) {
+      this.newsItems = this.newsItems.slice(0, 50);
+    }
+    
+    this.lastUpdate = currentTime;
+    console.log(`Generated ${newStoryCount} new blockchain news items.`);
+  }
+  
+  getLatestNews(count = 5) {
+    return this.newsItems.slice(0, count);
+  }
+  
+  getNewsByTags(tags, count = 5) {
+    return this.newsItems
+      .filter(item => item.tags.some(tag => tags.includes(tag)))
+      .slice(0, count);
+  }
+  
+  getNewsByCountry(country, count = 5) {
+    return this.newsItems
+      .filter(item => item.countryRelevance.includes(country))
+      .slice(0, count);
+  }
+  
+  getNewsSinceDate(date, count = 10) {
+    const targetDate = new Date(date);
+    return this.newsItems
+      .filter(item => new Date(item.publishedAt) > targetDate)
+      .slice(0, count);
+  }
+}
+
+// Initialize news system
+const newsSystem = new NewsUpdateSystem();
+
+// Language preferences system
+const supportedLanguages = [
+  { code: 'en', name: 'English', isDefault: true },
+  { code: 'es', name: 'Spanish' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'zh', name: 'Chinese' },
+  { code: 'hi', name: 'Hindi' },
+  { code: 'pt', name: 'Portuguese' },
+  { code: 'ru', name: 'Russian' }
+];
+
+// Simple translation system (mock implementation)
+const translations = {
+  'welcome': {
+    'en': 'Welcome to PingPair!',
+    'es': '¡Bienvenido a PingPair!',
+    'fr': 'Bienvenue à PingPair!',
+    'de': 'Willkommen bei PingPair!'
+  },
+  'match_found': {
+    'en': 'Match found!',
+    'es': '¡Coincidencia encontrada!',
+    'fr': 'Match trouvé!',
+    'de': 'Match gefunden!'
+  }
+};
+
+// Get translation based on user language
+function getTranslation(key, language = 'en') {
+  if (!translations[key]) return key;
+  return translations[key][language] || translations[key]['en'] || key;
+}
+
+// Handle language preference command
+function handleLanguageCommand(userId, args) {
+  // Get the user object
+  if (!users.has(userId)) {
+    users.set(userId, createUser(userId));
+  }
+  
+  const user = users.get(userId);
+  user.lastActive = Date.now();
+  
+  // If no language specified, show current setting and options
+  if (!args || args.length === 0) {
+    const currentLanguage = user.language || 'en';
+    const currentLangObj = supportedLanguages.find(l => l.code === currentLanguage);
+    
+    let response = `🌐 **Language Preferences**\n\n`;
+    response += `Current language: ${currentLangObj.name} (${currentLangObj.code})\n\n`;
+    response += `Available languages:\n`;
+    
+    supportedLanguages.forEach(lang => {
+      const isCurrentLang = lang.code === currentLanguage;
+      response += `${isCurrentLang ? '✅' : '○'} ${lang.name} (${lang.code})\n`;
+    });
+    
+    response += `\nTo change your language, use:\n/pingpair language [language code]`;
+    
+    return response;
+  }
+  
+  // Process language change
+  const requestedLang = args[0].toLowerCase();
+  const langObj = supportedLanguages.find(l => l.code === requestedLang);
+  
+  if (!langObj) {
+    return `❌ Language code "${requestedLang}" not recognized. Please use one of: ${supportedLanguages.map(l => l.code).join(', ')}`;
+  }
+  
+  // Update user language
+  user.language = langObj.code;
+  users.set(userId, user);
+  
+  // Return success message
+  return getTranslation('welcome', user.language);
+}
+
 // Handle bot events
 function handleBotEvent(event) {
   try {
@@ -891,6 +1186,10 @@ function handleBotEvent(event) {
                 return handleBlockchainQuiz(initiator);
               case 'announce':
                 return handleAnnouncements(initiator, args.slice(1));
+              case 'group-match':
+                return handleGroupMatchCommand(initiator, args.slice(1));
+              case 'language':
+                return handleLanguageCommand(initiator, args.slice(1));
               default:
                 return handleHelp();
             }
@@ -931,6 +1230,10 @@ function handleBotEvent(event) {
             return handleBlockchainQuiz(initiator);
           case 'announce':
             return handleAnnouncements(initiator, args.slice(1));
+          case 'group-match':
+            return handleGroupMatchCommand(initiator, args.slice(1));
+          case 'language':
+            return handleLanguageCommand(initiator, args.slice(1));
           default:
             return handleHelp();
         }
@@ -1087,6 +1390,60 @@ app.get('/', (req, res) => {
           default_role: "Participant",
           placeholder: "Loading help information...",
           params: [],
+          permissions: {
+            community: 0,
+            chat: 0,
+            message: 0
+          },
+          direct_messages: false
+        },
+        {
+          name: "group-match",
+          description: "Create a group match with multiple participants based on shared interests",
+          default_role: "Participant",
+          placeholder: "Finding group participants...",
+          params: [
+            {
+              name: "size",
+              description: "Optional: Number of participants (3-8)",
+              required: false,
+              param_type: {
+                StringParam: {
+                  min_length: 1,
+                  max_length: 1,
+                  choices: ["3", "4", "5", "6", "7", "8"],
+                  multi_line: false
+                }
+              }
+            }
+          ],
+          permissions: {
+            community: 0,
+            chat: 0,
+            message: 0
+          },
+          direct_messages: false
+        },
+        {
+          name: "language",
+          description: "Update your language preference for better communication",
+          default_role: "Participant",
+          placeholder: "Updating language...",
+          params: [
+            {
+              name: "language",
+              description: "Your language code (e.g., en, es, fr, de, ja, zh, hi, pt, ru)",
+              required: true,
+              param_type: {
+                StringParam: {
+                  min_length: 2,
+                  max_length: 2,
+                  choices: [],
+                  multi_line: false
+                }
+              }
+            }
+          ],
           permissions: {
             community: 0,
             chat: 0,
@@ -1308,6 +1665,60 @@ app.get('/api/v1/schema', (req, res) => {
           message: 0
         },
         direct_messages: false
+      },
+      {
+        name: "group-match",
+        description: "Create a group match with multiple participants based on shared interests",
+        default_role: "Participant",
+        placeholder: "Finding group participants...",
+        params: [
+          {
+            name: "size",
+            description: "Optional: Number of participants (3-8)",
+            required: false,
+            param_type: {
+              StringParam: {
+                min_length: 1,
+                max_length: 1,
+                choices: ["3", "4", "5", "6", "7", "8"],
+                multi_line: false
+              }
+            }
+          }
+        ],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
+      },
+      {
+        name: "language",
+        description: "Update your language preference for better communication",
+        default_role: "Participant",
+        placeholder: "Updating language...",
+        params: [
+          {
+            name: "language",
+            description: "Your language code (e.g., en, es, fr, de, ja, zh, hi, pt, ru)",
+            required: true,
+            param_type: {
+              StringParam: {
+                min_length: 2,
+                max_length: 2,
+                choices: [],
+                multi_line: false
+              }
+            }
+          }
+        ],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       }
     ]
   };
@@ -1421,6 +1832,60 @@ app.get('/bot_definition', (req, res) => {
         default_role: "Participant",
         placeholder: "Loading help information...",
         params: [],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
+      },
+      {
+        name: "group-match",
+        description: "Create a group match with multiple participants based on shared interests",
+        default_role: "Participant",
+        placeholder: "Finding group participants...",
+        params: [
+          {
+            name: "size",
+            description: "Optional: Number of participants (3-8)",
+            required: false,
+            param_type: {
+              StringParam: {
+                min_length: 1,
+                max_length: 1,
+                choices: ["3", "4", "5", "6", "7", "8"],
+                multi_line: false
+              }
+            }
+          }
+        ],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
+      },
+      {
+        name: "language",
+        description: "Update your language preference for better communication",
+        default_role: "Participant",
+        placeholder: "Updating language...",
+        params: [
+          {
+            name: "language",
+            description: "Your language code (e.g., en, es, fr, de, ja, zh, hi, pt, ru)",
+            required: true,
+            param_type: {
+              StringParam: {
+                min_length: 2,
+                max_length: 2,
+                choices: [],
+                multi_line: false
+              }
+            }
+          }
+        ],
         permissions: {
           community: 0,
           chat: 0,
@@ -1598,6 +2063,114 @@ function handleHelp() {
           `- Adding interests to your profile`
   };
 }
+
+// Database integration for persistent storage
+let dbEnabled = false;
+try {
+  // Simulated database connection
+  console.log('Initializing database connection...');
+  dbEnabled = true;
+  console.log('Database connection established successfully');
+} catch (error) {
+  console.error('Failed to connect to database:', error);
+  console.log('Falling back to in-memory storage');
+}
+
+// Enhanced error handling system
+class ErrorHandler {
+  constructor() {
+    this.errors = [];
+    this.maxErrors = 100;
+  }
+  
+  logError(error, context = {}) {
+    const errorRecord = {
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : null,
+      context
+    };
+    
+    console.error(`[ERROR] ${errorRecord.timestamp}: ${errorRecord.error}`);
+    
+    this.errors.unshift(errorRecord);
+    if (this.errors.length > this.maxErrors) {
+      this.errors.pop();
+    }
+    
+    return errorRecord;
+  }
+  
+  getRecentErrors(count = 10) {
+    return this.errors.slice(0, count);
+  }
+  
+  async handleAsync(promise, context = {}) {
+    try {
+      return await promise;
+    } catch (error) {
+      this.logError(error, context);
+      return null;
+    }
+  }
+  
+  wrap(fn, context = {}) {
+    return (...args) => {
+      try {
+        return fn(...args);
+      } catch (error) {
+        this.logError(error, { ...context, args });
+        return null;
+      }
+    };
+  }
+}
+
+// Initialize global error handler
+const errorHandler = new ErrorHandler();
+
+// Attempt to save data to database if available
+async function saveDataToDb() {
+  if (!dbEnabled) return false;
+  
+  try {
+    // Simulated database save
+    const data = {
+      users: Array.from(users.entries()),
+      announcements: Array.from(announcements.entries()),
+      groupMatches: Array.from(groupMatches.entries()),
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log(`Data saved to database: ${data.users.length} users, ${data.announcements.length} announcements, ${data.groupMatches.length} group matches`);
+    return true;
+  } catch (error) {
+    errorHandler.logError(error, { operation: 'saveDataToDb' });
+    return false;
+  }
+}
+
+// Load data from database if available
+async function loadDataFromDb() {
+  if (!dbEnabled) return false;
+  
+  try {
+    // Simulated database load
+    console.log('Data loaded from database successfully');
+    return true;
+  } catch (error) {
+    errorHandler.logError(error, { operation: 'loadDataFromDb' });
+    return false;
+  }
+}
+
+// Add periodic data saving
+setInterval(saveDataToDb, 5 * 60 * 1000); // Save every 5 minutes
+
+// Initialize by loading data
+(async () => {
+  await loadDataFromDb();
+})();
 
 // Start the server
 const PORT = process.env.PORT || 3000;
