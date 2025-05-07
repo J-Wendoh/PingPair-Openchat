@@ -306,9 +306,46 @@ app.post('/openchat-webhook', (req, res) => {
   }
 });
 
-// Status endpoint
+// Bot schema definition for OpenChat
 app.get('/', (req, res) => {
-  res.send('PingPair Bot is running! 🌍✨');
+  // If the Accept header includes application/json, return the schema
+  if (req.headers.accept && req.headers.accept.includes('application/json')) {
+    const botSchema = {
+      name: "PingPair Bot",
+      description: "Connect people globally through themed cultural exchange meetups",
+      category: "Social & Community",
+      version: "1.0.0",
+      avatar: "https://images.openchat.com/bot/ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe/icon.png",
+      commands: [
+        {
+          name: "/pingpair start",
+          description: "Begin receiving match pings"
+        },
+        {
+          name: "/pingpair profile",
+          description: "View and update profile"
+        },
+        {
+          name: "/pingpair skip",
+          description: "Skip current matching cycle"
+        },
+        {
+          name: "/pingpair stats",
+          description: "View Strix points and match history"
+        },
+        {
+          name: "/pingpair timezone",
+          description: "Update timezone preference"
+        }
+      ],
+      example_commands: ["/pingpair start", "/pingpair profile", "/pingpair stats"]
+    };
+    
+    res.json(botSchema);
+  } else {
+    // If not requesting JSON, return the HTML status page
+    res.send('PingPair Bot is running! 🌍✨');
+  }
 });
 
 // Simple test endpoint
@@ -392,6 +429,44 @@ app.get('/openchat-debug', (req, res) => {
       node_version: process.version
     }
   });
+});
+
+// Add dedicated schema endpoint
+app.get('/api/v1/schema', (req, res) => {
+  const botSchema = {
+    name: "PingPair Bot",
+    description: "Connect people globally through themed cultural exchange meetups",
+    category: "Social & Community",
+    version: "1.0.0",
+    avatar: "https://images.openchat.com/bot/ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe/icon.png",
+    commands: [
+      {
+        name: "/pingpair start",
+        description: "Begin receiving match pings"
+      },
+      {
+        name: "/pingpair profile",
+        description: "View and update profile"
+      },
+      {
+        name: "/pingpair skip",
+        description: "Skip current matching cycle"
+      },
+      {
+        name: "/pingpair stats",
+        description: "View Strix points and match history"
+      },
+      {
+        name: "/pingpair timezone",
+        description: "Update timezone preference"
+      }
+    ],
+    example_commands: ["/pingpair start", "/pingpair profile", "/pingpair stats"]
+  };
+  
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.json(botSchema);
 });
 
 // Start the server
