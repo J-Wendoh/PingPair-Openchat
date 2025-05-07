@@ -95,97 +95,101 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-# PingPair Bot
+# PingPair Bot 🌍✨
 
-PingPair is a social bot that connects people globally through themed, twice-weekly meetups. The bot aims to foster cross-cultural understanding and create an engaged community of globally-minded individuals.
+A social bot that connects people globally through cultural exchange and blockchain news.
 
 ## Features
 
-- **Global Spotlights**: Every 3-4 days, users receive a "Ping Time" message highlighting a different country with cultural facts
-- **Interest-Based Matching**: Users are matched based on shared interests in exploring different cultures
-- **AI-Generated Profiles**: Brief snapshots of match information to facilitate conversation
-- **Video Chat**: Temporary links for real-time connection
-- **Strix Points**: A network value system that grows with each completed connection
+### Core Features
+- 🌍 Cultural exchange matching
+- ⏰ Timezone-based matching
+- 🎯 Interest-based pairing
+- 💫 Strix Points reward system
+- 🏆 Achievements and badges
+- 📊 Leaderboards
+
+### Blockchain News
+- 📰 Country-specific blockchain news
+- 📅 Daily blockchain digest
+- 🎯 Blockchain knowledge quizzes
+- 🔍 Latest blockchain developments
 
 ## Commands
 
+### Core Commands
 - `/pingpair start` - Begin receiving match pings
-- `/pingpair profile` - View and update profile
+- `/pingpair profile` - View and update your profile
 - `/pingpair skip` - Skip current matching cycle
-- `/pingpair stats` - View Strix points and match history
-- `/pingpair timezone` - Update timezone preference
+- `/pingpair stats` - View your stats and match history
+- `/pingpair timezone` - Update your timezone
 
-## ElizaOS Integration Demo
+### Social Features
+- `/pingpair achievements` - View available achievements
+- `/pingpair leaderboard` - View top users
 
-PingPair includes a demonstration of how ElizaOS concepts can enhance its functionality. The demo showcases:
+### Blockchain News
+- `/pingpair blockchain [country]` - Get blockchain news
+- `/pingpair digest` - Get daily blockchain digest
+- `/pingpair quiz` - Test your blockchain knowledge
 
-- Enhanced cultural information
-- Improved matching algorithms
-- More natural conversation capabilities
+## Setup
 
-### Running the ElizaOS Demo
-
+1. Clone the repository:
 ```bash
-# Run the setup script
-bash elizaos/setup.sh
-
-# Run the demo
-node elizaos/pingpair-eliza-demo.js
+git clone https://github.com/yourusername/ping-pair-bot.git
+cd ping-pair-bot
 ```
 
-## Deployment on Render
+2. Install dependencies:
+```bash
+npm install
+```
 
-This bot can be deployed to Render for free using the Node.js environment.
+3. Create a `.env` file:
+```env
+PORT=3000
+PRINCIPAL_ID=your-principal-id
+```
 
-### Prerequisites
+4. Start the server:
+```bash
+npm start
+```
 
-1. A Render account
-2. DFX installed locally to create an identity
+## OpenChat Integration
 
-### Deployment Steps
+The bot is designed to work with OpenChat. To register:
 
-1. Create an identity:
-   ```bash
-   dfx identity new pingpair_identity
-   dfx identity use pingpair_identity
-   dfx identity export pingpair_identity > identity.pem
-   ```
+1. Deploy to Render.com
+2. Use the following endpoints:
+   - Principal ID: `ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe`
+   - Bot Name: "PingPair Bot"
+   - Endpoint: `https://pingpair-bot.onrender.com`
 
-2. Get your Principal ID:
-   ```bash
-   dfx identity get-principal
-   # Principal ID: ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe
-   ```
+## Project Structure
 
-3. Deploy to Render:
-   - Create a new Web Service on Render
-   - Connect your repository
-   - Use the following settings:
-     - Name: `pingpair-bot`
-     - Environment: `Node`
-     - Build Command: `npm install`
-     - Start Command: `npm start`
-   - Add the following environment variables:
-     - `PEM_FILE`: Paste the contents of your identity.pem file
-     - `PORT`: 3000
+```
+ping-pair-bot/
+├── src/
+│   ├── commands/        # Command handlers
+│   ├── services/        # Business logic
+│   └── utils/          # Utility functions
+├── public/             # Static files
+├── docs/              # Documentation
+├── server.js          # Main server file
+├── package.json       # Dependencies
+└── README.md          # This file
+```
 
-4. After deployment, use your Render URL (e.g., `https://pingpair-bot.onrender.com`) as the bot endpoint.
+## Contributing
 
-## OpenChat Registration
-
-To register with OpenChat, you'll need:
-
-1. **Principal ID**: `ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe`
-2. **Bot Name**: `pingpair_bot` (or another unique name with only alphanumeric and underscore)
-3. **Bot Endpoint**: Your Render URL (e.g., `https://pingpair-bot.onrender.com`)
-
-Use the `/register_bot` command in OpenChat with these details.
-
-## Development
-
-For development notes, see [docs/dev-notes.md](docs/dev-notes.md).
-For task progress, see [docs/task-log.md](docs/task-log.md).
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
-MIT License 
+MIT License - see LICENSE file for details 

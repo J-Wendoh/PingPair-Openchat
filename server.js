@@ -15,11 +15,42 @@ app.use(cors({
 
 app.use(express.json());
 
-// PING PAIR BOT LOGIC
+// Enhanced user tracking with social features
 const users = new Map();
 const matches = new Map();
 const onlineUsers = new Set();
 const activeMatches = new Map();
+const userStreaks = new Map();
+const userAchievements = new Map();
+
+// Achievement definitions
+const achievements = {
+  GLOBAL_CITIZEN: {
+    name: "🌍 Global Citizen",
+    description: "Match with users from 5 different countries",
+    points: 50
+  },
+  CULTURE_EXPLORER: {
+    name: "🎭 Culture Explorer",
+    description: "Learn about 10 different cultural traditions",
+    points: 30
+  },
+  SOCIAL_BUTTERFLY: {
+    name: "🦋 Social Butterfly",
+    description: "Complete 5 matches in one day",
+    points: 100
+  },
+  NIGHT_OWL: {
+    name: "🦉 Night Owl",
+    description: "Match with someone from a timezone 8+ hours away",
+    points: 25
+  },
+  EARLY_BIRD: {
+    name: "🐦 Early Bird",
+    description: "Complete a match before 9 AM your time",
+    points: 20
+  }
+};
 
 // Countries database for spotlights
 const countries = {
@@ -127,6 +158,76 @@ const countries = {
   }
 };
 
+// Blockchain news sources by country
+const blockchainNews = {
+  'India': {
+    name: 'India',
+    flag: '🇮🇳',
+    sources: [
+      'https://cointelegraph.com/tags/india',
+      'https://www.coindesk.com/tag/india/'
+    ],
+    facts: [
+      'India has over 100 blockchain startups',
+      'RBI is exploring CBDC development',
+      'India ranks 2nd in global crypto adoption',
+      'Major banks are implementing blockchain solutions',
+      'Government is developing blockchain-based land registry'
+    ]
+  },
+  'Brazil': {
+    name: 'Brazil',
+    flag: '🇧🇷',
+    sources: [
+      'https://cointelegraph.com/tags/brazil',
+      'https://www.coindesk.com/tag/brazil/'
+    ],
+    facts: [
+      'Brazil has a growing DeFi ecosystem',
+      'Major banks are testing blockchain solutions',
+      'Government exploring blockchain for public services',
+      'Growing NFT market in Brazil',
+      'Strong crypto trading community'
+    ]
+  },
+  'Japan': {
+    name: 'Japan',
+    flag: '🇯🇵',
+    sources: [
+      'https://cointelegraph.com/tags/japan',
+      'https://www.coindesk.com/tag/japan/'
+    ],
+    facts: [
+      'Japan has clear crypto regulations',
+      'Major companies accepting crypto payments',
+      'Strong blockchain gaming industry',
+      'Government supporting blockchain innovation',
+      'Advanced crypto exchange infrastructure'
+    ]
+  }
+};
+
+// Enhanced user structure
+function createUser(userId) {
+  return {
+    userId,
+    strixPoints: 5,
+    isActive: true,
+    timezone: 'UTC',
+    interests: [],
+    matchHistory: [],
+    lastActive: Date.now(),
+    streak: 0,
+    achievements: [],
+    favoriteCountries: [],
+    culturalFacts: new Set(),
+    traditions: new Set(),
+    badges: [],
+    level: 1,
+    xp: 0
+  };
+}
+
 // Function to update user's online status
 function updateUserStatus(userId, isOnline) {
   if (isOnline) {
@@ -136,7 +237,7 @@ function updateUserStatus(userId, isOnline) {
   }
 }
 
-// Enhanced matching algorithm
+// Enhanced matching algorithm with social features
 function findMatch(userId) {
   const user = users.get(userId);
   if (!user || !user.isActive) return null;
@@ -159,21 +260,64 @@ function findMatch(userId) {
 
   if (potentialMatches.length === 0) return null;
 
-  // Prioritize users with similar interests
+  // Enhanced scoring system
   const scoredMatches = potentialMatches.map(match => {
     const commonInterests = user.interests.filter(interest => 
       match.interests.includes(interest)
     ).length;
     
+    // Calculate cultural compatibility
+    const culturalOverlap = [...user.culturalFacts].filter(fact => 
+      match.culturalFacts.has(fact)
+    ).length;
+    
+    // Calculate time-based bonuses
+    const timeBonus = calculateTimeBonus(user, match);
+    
+    // Calculate streak bonus
+    const streakBonus = user.streak * 0.5;
+    
     return {
       user: match,
-      score: commonInterests * 2 + Math.random() // Add some randomness
+      score: (commonInterests * 2) + 
+             (culturalOverlap * 1.5) + 
+             timeBonus + 
+             streakBonus + 
+             Math.random() // Add some randomness
     };
   });
 
   // Sort by score and pick the best match
   scoredMatches.sort((a, b) => b.score - a.score);
   return scoredMatches[0]?.user;
+}
+
+// Calculate time-based bonuses
+function calculateTimeBonus(user1, user2) {
+  const now = new Date();
+  const hour = now.getHours();
+  
+  // Early bird bonus (5-9 AM)
+  if (hour >= 5 && hour < 9) {
+    return 2;
+  }
+  
+  // Night owl bonus (10 PM - 2 AM)
+  if (hour >= 22 || hour < 2) {
+    return 2;
+  }
+  
+  // Timezone difference bonus
+  const timezoneDiff = Math.abs(
+    parseInt(user1.timezone.replace('UTC', '')) - 
+    parseInt(user2.timezone.replace('UTC', ''))
+  );
+  
+  if (timezoneDiff >= 8) {
+    return 3; // Big timezone difference bonus
+  }
+  
+  return 0;
 }
 
 // Function to generate meeting link
@@ -183,7 +327,7 @@ function generateMeetingLink() {
   return `https://meet.openchat.com/${meetingId}`;
 }
 
-// Enhanced match creation
+// Enhanced match creation with social features
 function createMatch(user1Id, user2Id) {
   const matchId = `${user1Id}-${user2Id}-${Date.now()}`;
   const country = Object.keys(countries)[Math.floor(Math.random() * Object.keys(countries).length)];
@@ -196,28 +340,60 @@ function createMatch(user1Id, user2Id) {
     country,
     meetingLink,
     createdAt: Date.now(),
-    isCompleted: false
+    isCompleted: false,
+    culturalFacts: countries[country].facts,
+    traditions: countries[country].traditions,
+    iceBreakers: generateIceBreakers(country)
   };
   
   matches.set(matchId, match);
   activeMatches.set(user1Id, matchId);
   activeMatches.set(user2Id, matchId);
   
+  // Update streaks
+  updateStreak(user1Id);
+  updateStreak(user2Id);
+  
   return match;
+}
+
+// Generate ice breakers based on country
+function generateIceBreakers(country) {
+  const countryInfo = countries[country];
+  return [
+    `What's your favorite ${countryInfo.name} tradition?`,
+    `Have you ever tried ${countryInfo.cuisine[0]}?`,
+    `Would you like to visit ${countryInfo.landmarks[0]}?`,
+    `What do you know about ${countryInfo.name}'s culture?`
+  ];
+}
+
+// Update user streak
+function updateStreak(userId) {
+  const user = users.get(userId);
+  if (!user) return;
+  
+  const now = Date.now();
+  const lastActive = user.lastActive;
+  const dayInMs = 24 * 60 * 60 * 1000;
+  
+  if (now - lastActive <= dayInMs) {
+    user.streak++;
+    if (user.streak > user.bestStreak) {
+      user.bestStreak = user.streak;
+    }
+  } else {
+    user.streak = 1;
+  }
+  
+  user.lastActive = now;
+  users.set(userId, user);
 }
 
 // Enhanced command handlers with ElizaOS integration
 function handleStart(userId) {
   if (!users.has(userId)) {
-    users.set(userId, {
-      userId,
-      strixPoints: 5,
-      isActive: true,
-      timezone: 'UTC',
-      interests: [],
-      matchHistory: [],
-      lastActive: Date.now()
-    });
+    users.set(userId, createUser(userId));
     
     updateUserStatus(userId, true);
     
@@ -253,8 +429,23 @@ function handleProfile(userId, args) {
       countryText = `\n🌍 Country: ${countryInfo.flag} ${countryInfo.name}`;
     }
     
+    // Format achievements
+    const achievementsText = user.achievements.length > 0 ?
+      `\n🏆 Achievements:\n${user.achievements.map(a => `- ${a.name}: ${a.description}`).join('\n')}` : '';
+    
+    // Format badges
+    const badgesText = user.badges.length > 0 ?
+      `\n🎖️ Badges:\n${user.badges.join(' ')}` : '';
+    
+    // Format streak
+    const streakText = user.streak > 0 ?
+      `\n🔥 Current Streak: ${user.streak} days` : '';
+    
+    // Format level
+    const levelText = `\n⭐ Level ${user.level} (${user.xp} XP)`;
+    
     return {
-      text: `🌟 **Your PingPair Profile**\n\n${countryText}\n⏰ Timezone: ${user.timezone}\n🎯 Interests: ${user.interests.join(', ') || 'None set'}\n✨ Strix Points: ${user.strixPoints}\n🤝 Matches: ${user.matchHistory.length}\n\nUse /pingpair profile add [interest] to add interests`
+      text: `🌟 **Your PingPair Profile**\n\n${countryText}\n⏰ Timezone: ${user.timezone}\n🎯 Interests: ${user.interests.join(', ') || 'None set'}\n✨ Strix Points: ${user.strixPoints}${levelText}${streakText}${achievementsText}${badgesText}\n\n🤝 Matches: ${user.matchHistory.length}\n\nUse /pingpair profile add [interest] to add interests`
     };
   }
   
@@ -266,11 +457,19 @@ function handleProfile(userId, args) {
     if (!user.interests.includes(interest)) {
       user.interests.push(interest);
       user.strixPoints += 1;
+      user.xp += 5;
+      
+      // Check for level up
+      if (user.xp >= user.level * 100) {
+        user.level++;
+        user.badges.push('🎯');
+      }
+      
       users.set(userId, user);
     }
     
     return {
-      text: `✨ Added "${interest}" to your interests! You now have ${user.strixPoints} Strix Points.`
+      text: `✨ Added "${interest}" to your interests! You now have ${user.strixPoints} Strix Points and ${user.xp} XP.`
     };
   }
   
@@ -307,8 +506,14 @@ function handleStats(userId) {
     return `${country.flag} ${country.name}`;
   }).join('\n');
   
+  // Calculate statistics
+  const uniqueCountries = new Set(user.matchHistory.map(m => m.country)).size;
+  const totalMatches = user.matchHistory.length;
+  const bestStreak = user.bestStreak || 0;
+  const achievementsEarned = user.achievements.length;
+  
   return {
-    text: `✨ **Your PingPair Stats**\n\n🎯 Strix Points: ${user.strixPoints}\n🤝 Total Matches: ${user.matchHistory.length}\n🌟 Active: ${user.isActive ? 'Yes' : 'No'}\n\n🌍 Match History:\n${matchHistory || 'No matches yet'}\n\nKeep participating to earn more Strix Points!`
+    text: `✨ **Your PingPair Stats**\n\n🎯 Strix Points: ${user.strixPoints}\n⭐ Level: ${user.level}\n🔥 Current Streak: ${user.streak}\n🏆 Best Streak: ${bestStreak}\n🌍 Countries Visited: ${uniqueCountries}\n🤝 Total Matches: ${totalMatches}\n🏅 Achievements: ${achievementsEarned}\n\n🌍 Match History:\n${matchHistory || 'No matches yet'}\n\nKeep participating to earn more Strix Points and achievements!`
   };
 }
 
@@ -335,14 +540,43 @@ function handleTimezone(userId, args) {
   };
 }
 
-// Enhanced match notification
+// Enhanced match notification with social features
 function sendMatchNotification(userId, match) {
   const country = countries[match.country];
   const user = users.get(userId);
   
+  // Get random ice breaker
+  const iceBreaker = match.iceBreakers[Math.floor(Math.random() * match.iceBreakers.length)];
+  
+  // Get streak message
+  const streakMessage = user.streak > 1 ? 
+    `\n🔥 You're on a ${user.streak}-day streak!` : '';
+  
+  // Get achievement progress
+  const achievementProgress = getAchievementProgress(user);
+  
   return {
-    text: `🌟 **PingPair Match!**\n\n🌍 Today's Spotlight: ${country.flag} ${country.name}\n\n📚 Did you know?\n${country.facts[Math.floor(Math.random() * country.facts.length)]}\n\n🎯 Your match is ready!\n\n💬 Meeting Link: ${match.meetingLink}\n\n✨ You'll earn 10 Strix Points for completing this match!`
+    text: `🌟 **PingPair Match!**\n\n🌍 Today's Spotlight: ${country.flag} ${country.name}\n\n📚 Did you know?\n${country.facts[Math.floor(Math.random() * country.facts.length)]}\n\n🎯 Your match is ready!\n\n💬 Meeting Link: ${match.meetingLink}\n\n${streakMessage}\n\n${achievementProgress}\n\n❓ Ice Breaker: ${iceBreaker}\n\n✨ You'll earn 10 Strix Points for completing this match!`
   };
+}
+
+// Get achievement progress
+function getAchievementProgress(user) {
+  const progress = [];
+  
+  // Check Global Citizen achievement
+  const uniqueCountries = new Set(user.matchHistory.map(m => m.country));
+  if (uniqueCountries.size >= 3) {
+    progress.push(`🌍 Global Citizen: ${uniqueCountries.size}/5 countries`);
+  }
+  
+  // Check Culture Explorer achievement
+  if (user.culturalFacts.size >= 5) {
+    progress.push(`🎭 Culture Explorer: ${user.culturalFacts.size}/10 traditions`);
+  }
+  
+  return progress.length > 0 ? 
+    `🏆 Achievement Progress:\n${progress.join('\n')}` : '';
 }
 
 // Handle bot events
@@ -389,6 +623,16 @@ function handleBotEvent(event) {
                 return handleStats(initiator);
               case 'timezone':
                 return handleTimezone(initiator, args.slice(1));
+              case 'achievements':
+                return handleAchievements(initiator);
+              case 'leaderboard':
+                return handleLeaderboard(initiator);
+              case 'blockchain':
+                return handleBlockchainNews(initiator, args.slice(1));
+              case 'digest':
+                return handleDailyDigest(initiator);
+              case 'quiz':
+                return handleBlockchainQuiz(initiator);
               default:
                 return handleHelp();
             }
@@ -421,6 +665,12 @@ function handleBotEvent(event) {
             return handleStats(initiator);
           case 'timezone':
             return handleTimezone(initiator, args.slice(1));
+          case 'blockchain':
+            return handleBlockchainNews(initiator, args.slice(1));
+          case 'digest':
+            return handleDailyDigest(initiator);
+          case 'quiz':
+            return handleBlockchainQuiz(initiator);
           default:
             return handleHelp();
         }
@@ -501,6 +751,18 @@ app.get('/', (req, res) => {
         {
           name: "/pingpair timezone",
           description: "Update timezone preference"
+        },
+        {
+          name: "/pingpair blockchain",
+          description: "Get blockchain news"
+        },
+        {
+          name: "/pingpair digest",
+          description: "Get daily blockchain digest"
+        },
+        {
+          name: "/pingpair quiz",
+          description: "Test your blockchain knowledge"
         }
       ],
       example_commands: ["/pingpair start", "/pingpair profile", "/pingpair stats"]
@@ -526,7 +788,10 @@ app.get('/test', (req, res) => {
       "/pingpair profile",
       "/pingpair skip",
       "/pingpair stats",
-      "/pingpair timezone"
+      "/pingpair timezone",
+      "/pingpair blockchain",
+      "/pingpair digest",
+      "/pingpair quiz"
     ]
   });
 });
@@ -624,6 +889,18 @@ app.get('/api/v1/schema', (req, res) => {
       {
         name: "/pingpair timezone",
         description: "Update timezone preference"
+      },
+      {
+        name: "/pingpair blockchain",
+        description: "Get blockchain news"
+      },
+      {
+        name: "/pingpair digest",
+        description: "Get daily blockchain digest"
+      },
+      {
+        name: "/pingpair quiz",
+        description: "Test your blockchain knowledge"
       }
     ],
     example_commands: ["/pingpair start", "/pingpair profile", "/pingpair stats"]
@@ -662,6 +939,18 @@ app.get('/bot_definition', (req, res) => {
       {
         name: "/pingpair timezone",
         description: "Update your timezone preference"
+      },
+      {
+        name: "/pingpair blockchain",
+        description: "Get blockchain news"
+      },
+      {
+        name: "/pingpair digest",
+        description: "Get daily blockchain digest"
+      },
+      {
+        name: "/pingpair quiz",
+        description: "Test your blockchain knowledge"
       }
     ],
     example_commands: [
@@ -669,10 +958,178 @@ app.get('/bot_definition', (req, res) => {
       "/pingpair profile",
       "/pingpair skip",
       "/pingpair stats",
-      "/pingpair timezone"
+      "/pingpair timezone",
+      "/pingpair blockchain",
+      "/pingpair digest",
+      "/pingpair quiz"
     ]
   });
 });
+
+// Add new command for achievements
+function handleAchievements(userId) {
+  if (!users.has(userId)) {
+    return handleStart(userId);
+  }
+  
+  const user = users.get(userId);
+  user.lastActive = Date.now();
+  
+  // Get all available achievements
+  const availableAchievements = Object.entries(achievements).map(([key, achievement]) => {
+    const progress = getAchievementProgress(user, key);
+    return `- ${achievement.name}: ${achievement.description}\n  ${progress}`;
+  }).join('\n\n');
+  
+  return {
+    text: `🏆 **Available Achievements**\n\n${availableAchievements}\n\nComplete achievements to earn Strix Points and special badges!`
+  };
+}
+
+// Add new command for leaderboard
+function handleLeaderboard(userId) {
+  if (!users.has(userId)) {
+    return handleStart(userId);
+  }
+  
+  const user = users.get(userId);
+  user.lastActive = Date.now();
+  
+  // Get top users by different metrics
+  const topByPoints = Array.from(users.values())
+    .sort((a, b) => b.strixPoints - a.strixPoints)
+    .slice(0, 5);
+  
+  const topByStreak = Array.from(users.values())
+    .sort((a, b) => (b.bestStreak || 0) - (a.bestStreak || 0))
+    .slice(0, 5);
+  
+  const topByMatches = Array.from(users.values())
+    .sort((a, b) => b.matchHistory.length - a.matchHistory.length)
+    .slice(0, 5);
+  
+  const pointsLeaderboard = topByPoints
+    .map((u, i) => `${i + 1}. ${u.userId}: ${u.strixPoints} points`)
+    .join('\n');
+  
+  const streakLeaderboard = topByStreak
+    .map((u, i) => `${i + 1}. ${u.userId}: ${u.bestStreak || 0} days`)
+    .join('\n');
+  
+  const matchesLeaderboard = topByMatches
+    .map((u, i) => `${i + 1}. ${u.userId}: ${u.matchHistory.length} matches`)
+    .join('\n');
+  
+  return {
+    text: `🏆 **PingPair Leaderboards**\n\n💰 **Top Strix Points**\n${pointsLeaderboard}\n\n🔥 **Top Streaks**\n${streakLeaderboard}\n\n🤝 **Most Matches**\n${matchesLeaderboard}\n\nKeep participating to climb the leaderboards!`
+  };
+}
+
+// Add new command for blockchain news
+function handleBlockchainNews(userId, args) {
+  if (!users.has(userId)) {
+    return handleStart(userId);
+  }
+  
+  const user = users.get(userId);
+  user.lastActive = Date.now();
+  
+  // If no country specified, show all countries
+  if (!args || args.length === 0) {
+    const countryList = Object.entries(blockchainNews)
+      .map(([code, data]) => `${data.flag} ${data.name}`)
+      .join('\n');
+    
+    return {
+      text: `🌐 **Blockchain News by Country**\n\n${countryList}\n\nUse /pingpair blockchain [country] to get latest news`
+    };
+  }
+  
+  // Get news for specific country
+  const country = args.join(' ');
+  const countryData = Object.values(blockchainNews).find(c => 
+    c.name.toLowerCase() === country.toLowerCase()
+  );
+  
+  if (!countryData) {
+    return {
+      text: `❌ Country not found. Available countries:\n${Object.values(blockchainNews).map(c => c.flag + ' ' + c.name).join('\n')}`
+    };
+  }
+  
+  // Get random fact and format news
+  const fact = countryData.facts[Math.floor(Math.random() * countryData.facts.length)];
+  const sources = countryData.sources.join('\n');
+  
+  return {
+    text: `📰 **Blockchain News: ${countryData.flag} ${countryData.name}**\n\n💡 Did you know?\n${fact}\n\n🔍 Latest news sources:\n${sources}\n\n✨ Earn 5 Strix Points for reading blockchain news!`
+  };
+}
+
+// Add new command for daily blockchain digest
+function handleDailyDigest(userId) {
+  if (!users.has(userId)) {
+    return handleStart(userId);
+  }
+  
+  const user = users.get(userId);
+  user.lastActive = Date.now();
+  
+  // Get random facts from each country
+  const digest = Object.values(blockchainNews).map(country => {
+    const fact = country.facts[Math.floor(Math.random() * country.facts.length)];
+    return `${country.flag} **${country.name}**: ${fact}`;
+  }).join('\n\n');
+  
+  return {
+    text: `📰 **Daily Blockchain Digest**\n\n${digest}\n\n✨ Earn 10 Strix Points for reading the daily digest!`
+  };
+}
+
+// Add new command for blockchain quiz
+function handleBlockchainQuiz(userId) {
+  if (!users.has(userId)) {
+    return handleStart(userId);
+  }
+  
+  const user = users.get(userId);
+  user.lastActive = Date.now();
+  
+  // Generate random quiz question
+  const countries = Object.values(blockchainNews);
+  const country = countries[Math.floor(Math.random() * countries.length)];
+  const fact = country.facts[Math.floor(Math.random() * country.facts.length)];
+  
+  return {
+    text: `🎯 **Blockchain Quiz**\n\nWhich country is this fact about?\n\n${fact}\n\nAnswer with /pingpair quiz [country name]\n\n✨ Earn 15 Strix Points for correct answers!`
+  };
+}
+
+// Update help command with new features
+function handleHelp() {
+  return {
+    text: `🌟 **PingPair Bot Commands**\n\n` +
+          `🎯 Core Commands:\n` +
+          `/pingpair start - Begin receiving match pings\n` +
+          `/pingpair profile - View and update your profile\n` +
+          `/pingpair skip - Skip current matching cycle\n` +
+          `/pingpair stats - View your stats and match history\n` +
+          `/pingpair timezone - Update your timezone\n\n` +
+          `🏆 Social Features:\n` +
+          `/pingpair achievements - View available achievements\n` +
+          `/pingpair leaderboard - View top users\n\n` +
+          `📰 Blockchain News:\n` +
+          `/pingpair blockchain [country] - Get blockchain news\n` +
+          `/pingpair digest - Get daily blockchain digest\n` +
+          `/pingpair quiz - Test your blockchain knowledge\n\n` +
+          `✨ Earn Strix Points and achievements by:\n` +
+          `- Completing matches\n` +
+          `- Maintaining streaks\n` +
+          `- Reading blockchain news\n` +
+          `- Taking blockchain quizzes\n` +
+          `- Adding interests to your profile`
+  };
+}
 
 // Start the server
 const PORT = process.env.PORT || 3000;

@@ -1,139 +1,76 @@
-# PingPair Bot - File Structure
-
-## Directory Structure
+# Project Structure
 
 ```
-PingPair/
-│
-├── src/               # Source code
-│   ├── lib.rs         # Library exports for binaries
-│   ├── main.rs        # Main entry point for the bot
-│   ├── config.rs      # Configuration handling
+ping-pair-bot/
+├── src/
+│   ├── commands/           # Command handlers
+│   │   ├── core.js        # Core commands (start, profile, etc.)
+│   │   ├── social.js      # Social features (achievements, leaderboard)
+│   │   └── blockchain.js  # Blockchain news features
 │   │
-│   ├── api/           # API endpoints and handlers
-│   │   ├── mod.rs     # API module exports
-│   │   ├── handlers.rs # Command and message handlers
-│   │   └── webhook.rs # OpenChat webhook handler
+│   ├── services/          # Business logic
+│   │   ├── matching.js    # Matching algorithm
+│   │   ├── user.js        # User management
+│   │   └── news.js        # Blockchain news service
 │   │
-│   ├── commands/      # Bot command implementations
-│   │   ├── mod.rs     # Command module exports
-│   │   ├── pingpair.rs # Primary PingPair command handler
-│   │   └── echo.rs    # Simple echo command for testing
-│   │
-│   ├── model/         # Data models and state management
-│   │   ├── mod.rs     # Model module exports
-│   │   ├── state.rs   # Application state management
-│   │   ├── types.rs   # Data type definitions
-│   │   └── country.rs # Country database and cultural info
-│   │
-│   ├── matching/      # Matching system
-│   │   ├── mod.rs     # Matching module exports
-│   │   ├── engine.rs  # Matching algorithm
-│   │   └── scoring.rs # Match scoring system
-│   │
-│   ├── meeting/       # Meeting system
-│   │   ├── mod.rs     # Meeting module exports
-│   │   ├── generator.rs # Meeting link generator
-│   │   └── tracker.rs # Meeting status tracker
-│   │
-│   └── bin/           # Binary executables
-│       └── test_ping.rs # Test tool for ping functionality
+│   └── utils/            # Utility functions
+│       ├── timezone.js   # Timezone handling
+│       └── validation.js # Input validation
 │
-├── tests/             # Test files
-│   └── integration/   # Integration tests
+├── public/               # Static files
+│   ├── icon.png         # Bot icon
+│   └── styles/          # CSS styles
 │
-├── docs/              # Documentation
-│   ├── task-log.md    # Task tracking and progress
-│   ├── dev-notes.md   # Development notes
-│   ├── file-tree.md   # File structure documentation
-│   ├── pitch-deck.md  # Project pitch document
-│   └── partner-update.md # Updates for partners
+├── docs/                # Documentation
+│   ├── dev-notes.md    # Development notes
+│   ├── task-log.md     # Task tracking
+│   └── file-tree.md    # This file
 │
-├── scripts/           # Helper scripts
-│   └── deploy.sh      # Deployment script
-│
-├── target/            # Build artifacts (generated)
-│
-├── Cargo.toml         # Rust package manifest
-├── Cargo.lock         # Dependency lock file
-├── config.toml        # Application configuration
-└── README.md          # Project overview
+├── server.js           # Main server file
+├── package.json        # Dependencies
+├── .env               # Environment variables
+└── README.md          # Project documentation
 ```
 
-## Component Relationships
+## Key Components
 
-### Main Component Flow
+### Source Code (`src/`)
+- **commands/**: Command handlers for different bot features
+- **services/**: Core business logic and algorithms
+- **utils/**: Helper functions and utilities
 
-```
-main.rs
-  │
-  ├── config.rs (Load configuration)
-  │
-  ├── commands/mod.rs
-  │   └── pingpair.rs (Command implementations)
-  │
-  ├── api/handlers.rs (API endpoints)
-  │   │
-  │   ├── model/state.rs (State management)
-  │   │   └── model/types.rs (Data structures)
-  │   │
-  │   ├── matching/engine.rs (Matching system)
-  │   │   └── matching/scoring.rs (Match scoring)
-  │   │
-  │   └── meeting/generator.rs (Meeting system)
-  │
-  └── model/state.rs (Initialize state)
-```
+### Static Files (`public/`)
+- Bot icon and other static assets
+- CSS styles for web interface
 
-### Command Structure
+### Documentation (`docs/`)
+- Development notes and technical details
+- Task tracking and progress
+- Project structure documentation
 
-```
-commands/pingpair.rs
-  │
-  ├── CommandHandler trait implementation
-  │   └── execute() method
-  │       │
-  │       └── api/handlers.rs (Command handlers)
-  │           │
-  │           ├── model/state.rs (User & match management)
-  │           │
-  │           ├── matching/engine.rs (Matching system)
-  │           │
-  │           └── meeting/generator.rs (Meeting system)
-  │
-  └── simulate_ping_time() function
-```
+### Root Files
+- `server.js`: Main application entry point
+- `package.json`: Project dependencies and scripts
+- `.env`: Environment configuration
+- `README.md`: Project overview and setup instructions
 
-## File Sizes
+## File Descriptions
 
-- Main application code: ~15KB
-- Command implementations: ~6KB
-- API handlers: ~8KB
-- Models and state: ~7KB
-- Matching system: ~5KB
-- Meeting system: ~4KB
-- Configuration: ~1KB
-- Documentation: ~12KB
+### Command Handlers
+- `core.js`: Basic bot commands (start, profile, skip, stats)
+- `social.js`: Social features (achievements, leaderboard)
+- `blockchain.js`: Blockchain news and quiz features
 
-## Key File Descriptions
+### Services
+- `matching.js`: User matching algorithm
+- `user.js`: User management and tracking
+- `news.js`: Blockchain news aggregation
 
-### src/lib.rs
-Exports all necessary modules for binary files to access the library functionality.
+### Utilities
+- `timezone.js`: Timezone conversion and validation
+- `validation.js`: Input validation and sanitization
 
-### src/main.rs
-Main application entry point that initializes the bot, loads configuration, and starts the HTTP server for bot communication.
-
-### src/commands/pingpair.rs
-Core command implementation for the PingPair bot that handles all user commands.
-
-### src/api/handlers.rs
-Handlers for various bot commands and messages, implementing the business logic for user interactions.
-
-### src/model/state.rs
-State management functions for users, matches, and sessions. Provides persistent storage for the bot operation.
-
-### src/matching/engine.rs
-Enhanced matching algorithm that considers online status, timezone compatibility, and shared interests.
-
-### src/meeting/generator.rs
-Meeting system that generates and tracks OpenChat meeting links for user matches. 
+### Documentation
+- `dev-notes.md`: Technical implementation details
+- `task-log.md`: Feature tracking and progress
+- `file-tree.md`: Project structure documentation 
