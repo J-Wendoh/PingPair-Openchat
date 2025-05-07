@@ -2,75 +2,86 @@
 
 ```
 ping-pair-bot/
-├── src/
-│   ├── commands/           # Command handlers
-│   │   ├── core.js        # Core commands (start, profile, etc.)
-│   │   ├── social.js      # Social features (achievements, leaderboard)
-│   │   └── blockchain.js  # Blockchain news features
-│   │
-│   ├── services/          # Business logic
-│   │   ├── matching.js    # Matching algorithm
-│   │   ├── user.js        # User management
-│   │   └── news.js        # Blockchain news service
-│   │
-│   └── utils/            # Utility functions
-│       ├── timezone.js   # Timezone handling
-│       └── validation.js # Input validation
-│
-├── public/               # Static files
-│   ├── icon.png         # Bot icon
-│   └── styles/          # CSS styles
-│
-├── docs/                # Documentation
-│   ├── dev-notes.md    # Development notes
-│   ├── task-log.md     # Task tracking
-│   └── file-tree.md    # This file
-│
-├── server.js           # Main server file
-├── package.json        # Dependencies
-├── .env               # Environment variables
-└── README.md          # Project documentation
+├── src/                      # Source code
+│   ├── commands/            # Bot command handlers
+│   │   ├── core/           # Core commands (start, profile, etc.)
+│   │   ├── social/         # Social features (announcements, etc.)
+│   │   └── blockchain/     # Blockchain news features
+│   ├── services/           # Business logic services
+│   │   ├── matching/       # Matching algorithm
+│   │   ├── achievements/   # Achievement system
+│   │   └── blockchain/     # Blockchain news service
+│   ├── utils/              # Utility functions
+│   │   ├── timezone.js     # Timezone handling
+│   │   ├── points.js       # Points calculation
+│   │   └── validation.js   # Input validation
+│   └── config/             # Configuration files
+│       ├── constants.js    # Bot constants
+│       └── countries.js    # Country data
+├── public/                 # Static files
+│   ├── images/            # Bot images and icons
+│   └── assets/            # Other static assets
+├── docs/                   # Documentation
+│   ├── api/               # API documentation
+│   │   ├── endpoints.md   # API endpoints
+│   │   └── schemas.md     # Data schemas
+│   ├── guides/            # User guides
+│   │   ├── setup.md       # Setup guide
+│   │   └── commands.md    # Command guide
+│   ├── dev/               # Developer documentation
+│   │   ├── architecture.md # System architecture
+│   │   └── contributing.md # Contributing guide
+│   └── project/           # Project documentation
+│       ├── roadmap.md     # Project roadmap
+│       └── changelog.md   # Version history
+├── tests/                 # Test files
+│   ├── unit/             # Unit tests
+│   └── integration/      # Integration tests
+├── scripts/              # Utility scripts
+├── .env.example         # Environment variables template
+├── .gitignore          # Git ignore rules
+├── package.json        # Node.js dependencies
+├── README.md           # Project overview
+└── server.js           # Main server file
 ```
 
 ## Key Components
 
 ### Source Code (`src/`)
-- **commands/**: Command handlers for different bot features
-- **services/**: Core business logic and algorithms
-- **utils/**: Helper functions and utilities
-
-### Static Files (`public/`)
-- Bot icon and other static assets
-- CSS styles for web interface
+- **Commands**: Bot command handlers organized by feature
+- **Services**: Core business logic and algorithms
+- **Utils**: Reusable utility functions
+- **Config**: Configuration and constant definitions
 
 ### Documentation (`docs/`)
-- Development notes and technical details
-- Task tracking and progress
-- Project structure documentation
+- **API**: API documentation and schemas
+- **Guides**: User and setup guides
+- **Dev**: Developer documentation
+- **Project**: Project management docs
 
-### Root Files
+### Static Files (`public/`)
+- Bot images and icons
+- Static assets for web interface
+
+### Tests (`tests/`)
+- Unit tests for individual components
+- Integration tests for features
+
+## File Purposes
+
+### Core Files
 - `server.js`: Main application entry point
 - `package.json`: Project dependencies and scripts
-- `.env`: Environment configuration
-- `README.md`: Project overview and setup instructions
-
-## File Descriptions
-
-### Command Handlers
-- `core.js`: Basic bot commands (start, profile, skip, stats)
-- `social.js`: Social features (achievements, leaderboard)
-- `blockchain.js`: Blockchain news and quiz features
-
-### Services
-- `matching.js`: User matching algorithm
-- `user.js`: User management and tracking
-- `news.js`: Blockchain news aggregation
-
-### Utilities
-- `timezone.js`: Timezone conversion and validation
-- `validation.js`: Input validation and sanitization
+- `.env.example`: Environment variable template
+- `README.md`: Project overview and setup guide
 
 ### Documentation
-- `dev-notes.md`: Technical implementation details
-- `task-log.md`: Feature tracking and progress
-- `file-tree.md`: Project structure documentation 
+- `docs/api/`: API documentation and schemas
+- `docs/guides/`: User guides and tutorials
+- `docs/dev/`: Developer documentation
+- `docs/project/`: Project management docs
+
+### Configuration
+- `src/config/`: Application configuration
+- `.env`: Environment variables (not in repo)
+- `render.yaml`: Deployment configuration 

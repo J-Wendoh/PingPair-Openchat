@@ -99,7 +99,7 @@ SOFTWARE.
 
 A social bot that connects people globally through cultural exchange and blockchain news.
 
-## Features
+## 🌟 Features
 
 ### Core Features
 - 🌍 Cultural exchange matching
@@ -109,13 +109,56 @@ A social bot that connects people globally through cultural exchange and blockch
 - 🏆 Achievements and badges
 - 📊 Leaderboards
 
+### Community Features
+- 📢 Community announcements
+- 💬 Comment system
+- 👍 Reaction support
+- 🎯 Point rewards for engagement
+- 📋 Announcement sorting
+
 ### Blockchain News
 - 📰 Country-specific blockchain news
 - 📅 Daily blockchain digest
 - 🎯 Blockchain knowledge quizzes
 - 🔍 Latest blockchain developments
 
-## Commands
+## 🚀 Quick Start
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/J-Wendoh/PingPair-Openchat.git
+   cd ping-pair-bot
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. Start the server:
+   ```bash
+   npm start
+   ```
+
+## 📚 Documentation
+
+### User Guides
+- [Setup Guide](docs/guides/setup.md)
+- [Command Guide](docs/guides/commands.md)
+- [API Documentation](docs/api/endpoints.md)
+
+### Developer Resources
+- [Architecture Overview](docs/dev/architecture.md)
+- [Contributing Guide](docs/dev/contributing.md)
+- [Project Roadmap](docs/project/roadmap.md)
+
+## 🤖 Commands
 
 ### Core Commands
 - `/pingpair start` - Begin receiving match pings
@@ -127,69 +170,64 @@ A social bot that connects people globally through cultural exchange and blockch
 ### Social Features
 - `/pingpair achievements` - View available achievements
 - `/pingpair leaderboard` - View top users
+- `/pingpair announce` - Community announcements
+- `/pingpair announce create [title] [content]` - Create new announcement
+- `/pingpair announce view [id]` - View announcement details
+- `/pingpair announce comment [id] [content]` - Add a comment
+- `/pingpair announce react [id] [reaction]` - Add a reaction
 
 ### Blockchain News
 - `/pingpair blockchain [country]` - Get blockchain news
 - `/pingpair digest` - Get daily blockchain digest
 - `/pingpair quiz` - Test your blockchain knowledge
 
-## Setup
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/ping-pair-bot.git
-cd ping-pair-bot
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env` file:
-```env
-PORT=3000
-PRINCIPAL_ID=your-principal-id
-```
-
-4. Start the server:
-```bash
-npm start
-```
-
-## OpenChat Integration
-
-The bot is designed to work with OpenChat. To register:
-
-1. Deploy to Render.com
-2. Use the following endpoints:
-   - Principal ID: `ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe`
-   - Bot Name: "PingPair Bot"
-   - Endpoint: `https://pingpair-bot.onrender.com`
-
-## Project Structure
+## 🏗️ Project Structure
 
 ```
 ping-pair-bot/
-├── src/
-│   ├── commands/        # Command handlers
-│   ├── services/        # Business logic
-│   └── utils/          # Utility functions
-├── public/             # Static files
-├── docs/              # Documentation
-├── server.js          # Main server file
-├── package.json       # Dependencies
-└── README.md          # This file
+├── src/                      # Source code
+│   ├── commands/            # Bot command handlers
+│   ├── services/           # Business logic services
+│   ├── utils/              # Utility functions
+│   └── config/             # Configuration files
+├── public/                 # Static files
+├── docs/                   # Documentation
+├── tests/                 # Test files
+└── scripts/              # Utility scripts
 ```
 
-## Contributing
+See [File Tree](docs/file-tree.md) for detailed structure.
+
+## 🔧 Configuration
+
+### Environment Variables
+- `PORT` - Server port (default: 3000)
+- `NODE_ENV` - Environment (development/production)
+- `OPENCHAT_PRINCIPAL` - OpenChat principal ID
+- `BOT_NAME` - Bot display name
+- `BOT_DESCRIPTION` - Bot description
+
+### Deployment
+- [Render](https://render.com) configuration in `render.yaml`
+- Environment variables in `.env`
+- Static files in `public/`
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+See [Contributing Guide](docs/dev/contributing.md) for details.
 
-MIT License - see LICENSE file for details 
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- OpenChat for the platform
+- Community contributors
+- All our users 
