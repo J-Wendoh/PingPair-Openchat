@@ -1,3 +1,6 @@
+# Explicitly ignore node_modules (prioritized)
+node_modules/
+
 # Generated files
 /target/
 **/target/
