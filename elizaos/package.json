@@ -1,0 +1,23 @@
+{
+  "name": "pingpair-elizaos",
+  "version": "1.0.0",
+  "description": "ElizaOS integration for PingPair bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup": "chmod +x setup.sh && ./setup.sh"
+  },
+  "dependencies": {
+    "@elizaos/core": "^0.1.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "pingpair",
+    "elizaos",
+    "openchat",
+    "bot"
+  ],
+  "author": "PingPair Team",
+  "license": "MIT"
+} 

@@ -211,6 +211,23 @@ const blockchainNews = {
   }
 };
 
+// Load ElizaOS integration
+let elizaOS;
+try {
+  elizaOS = require('./elizaos');
+  console.log('ElizaOS integration loaded successfully');
+} catch (error) {
+  console.warn('ElizaOS integration not available:', error.message);
+  // Create a mock elizaOS if it's not available
+  elizaOS = {
+    getConversationStarters: () => ['What are your interests?', 'What timezone are you in?'],
+    getCulturalInfo: () => null,
+    getTimezoneInfo: () => ({ code: 'UTC', offset: 0 }),
+    matchUsers: async () => ({ id: 'mock_match', score: { overall: 0.5 } }),
+    scheduleMatchSession: async () => ({ id: 'mock_session', meetingLink: 'https://example.com/meet' })
+  };
+}
+
 // Enhanced user structure
 function createUser(userId) {
   return {
@@ -392,6 +409,79 @@ function updateStreak(userId) {
   
   user.lastActive = now;
   users.set(userId, user);
+}
+
+// Enhanced command handlers with ElizaOS integration
+async function handleMatchCommand(userId, params) {
+  // Get the user object
+  const user = users.get(userId) || { id: userId, interests: [], timezone: 'UTC' };
+  
+  // Find potential matches
+  const potentialMatches = Array.from(users.values()).filter(u => 
+    u.id !== userId && u.interests && u.interests.length > 0
+  );
+  
+  if (potentialMatches.length === 0) {
+    return "Sorry, there are no users available for matching at the moment. Try again later!";
+  }
+  
+  // Use ElizaOS to find the best match
+  const matchResults = await Promise.all(
+    potentialMatches.map(async otherUser => {
+      const match = await elizaOS.matchUsers(user, otherUser);
+      return { user: otherUser, match };
+    })
+  );
+  
+  // Sort by match score (highest first)
+  matchResults.sort((a, b) => b.match.score.overall - a.match.score.overall);
+  
+  // Get the best match
+  const bestMatch = matchResults[0];
+  const matchedUser = bestMatch.user;
+  
+  // Schedule a session
+  const session = await elizaOS.scheduleMatchSession(bestMatch.match, {
+    user1: user,
+    user2: matchedUser
+  });
+  
+  // Generate conversation starters
+  const starters = elizaOS.getConversationStarters(user, matchedUser);
+  
+  // Record the match in history
+  const matchRecord = {
+    id: bestMatch.match.id,
+    userId: user.id,
+    matchedUserId: matchedUser.id,
+    timestamp: new Date().toISOString(),
+    score: bestMatch.match.score.overall,
+    sessionId: session.id
+  };
+  
+  // Update match history for both users
+  if (!user.matchHistory) user.matchHistory = [];
+  if (!matchedUser.matchHistory) matchedUser.matchHistory = [];
+  
+  user.matchHistory.push(matchRecord);
+  matchedUser.matchHistory.push({...matchRecord, userId: matchedUser.id, matchedUserId: user.id});
+  
+  // Save updated user data
+  users.set(userId, user);
+  users.set(matchedUser.id, matchedUser);
+  
+  // Build response
+  let response = `✨ Found a match! You've been matched with **${matchedUser.name || 'another user'}**\n\n`;
+  response += `📊 Match score: ${Math.round(bestMatch.match.score.overall * 100)}%\n\n`;
+  response += `🗓️ Suggested meeting time: ${session.displayTimes.user1}\n\n`;
+  response += `🔗 Meeting link: ${session.meetingLink}\n\n`;
+  response += `💬 Conversation starters:\n`;
+  
+  starters.slice(0, 3).forEach((starter, index) => {
+    response += `${index + 1}. ${starter}\n`;
+  });
+  
+  return response;
 }
 
 // Enhanced command handlers with ElizaOS integration
