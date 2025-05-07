@@ -343,37 +343,20 @@ app.get('/.well-known/canister-info', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   
-  // Use the exact format required by OpenChat
+  // Use the exact format that OpenChat expects
   const principal = process.env.PRINCIPAL_ID || 'ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe';
   
-  // Create the response object with the principal as the key
-  const responseObj = {};
-  responseObj[principal] = {
-    name: 'PingPair Bot',
-    description: 'Connect people globally through themed cultural exchange meetups',
-    frontend_url: 'https://pingpair-bot.onrender.com',
-    icon_url: 'https://pingpair-bot.onrender.com/icon.png',
-    module_hash: ''
-  };
-  
-  // Send the response without wrapping in "canisters"
-  res.send(JSON.stringify(responseObj));
+  // The format OpenChat expects is *just* the principal as the top-level key
+  res.send(`{"${principal}":{"name":"PingPair Bot","description":"Connect people globally through themed cultural exchange meetups"}}`);
 });
 
 // Simple icon endpoint
 app.get('/icon.png', (req, res) => {
-  const iconPath = path.join(__dirname, 'public/pingpair-icon.png');
+  // Set the content type
+  res.setHeader('Content-Type', 'image/png');
   
-  // Check if the file exists
-  if (fs.existsSync(iconPath)) {
-    res.sendFile(iconPath);
-  } else {
-    // If no icon file exists, send a placeholder response
-    res.setHeader('Content-Type', 'image/png');
-    
-    // Redirect to a placeholder image
-    res.redirect('https://via.placeholder.com/256x256.png?text=PingPair');
-  }
+  // Use a public placeholder instead
+  res.redirect('https://placehold.co/256x256/3498db/FFFFFF.png?text=PingPair');
 });
 
 // Additional diagnostic endpoint
