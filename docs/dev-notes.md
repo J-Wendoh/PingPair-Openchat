@@ -5,15 +5,16 @@
 ### Technology Stack
 - Framework: OpenChat Bot SDK (Rust-based canister)
 - Storage: Internet Computer canister state
-- Matching: Custom algorithm based on user preferences and timezones
-- Scheduling: Timers for periodic ping messages
+- Matching: Enhanced algorithm based on online status, timezone, and interests
+- Scheduling: Real-time matching with online status tracking
+- Integration: OpenChat meeting system
 
 ### Core Components
 - Bot Canister: Main canister handling commands and interactions
-- User Manager: Handles user profiles and preferences
-- Match Engine: Pairs users based on preferences and timezones
-- Ping Scheduler: Manages periodic ping messages
-- Strix System: Tracks and awards network points
+- User Manager: Handles user profiles, preferences, and online status
+- Match Engine: Real-time pairing based on multiple factors
+- Meeting System: OpenChat meeting integration
+- Strix System: Enhanced gamification with cultural rewards
 
 ## Implementation Decisions
 
@@ -32,6 +33,7 @@ pub struct User {
     bio: Option<String>,
     strix_points: u32,
     is_active: bool,
+    last_active: u64,
     last_pinged: Option<u64>,
     last_matched: Option<u64>,
     match_history: Vec<MatchRecord>,
@@ -49,20 +51,41 @@ pub struct Match {
     meeting_link: String,
     created_at: u64,
     is_completed: bool,
+    cultural_facts: Vec<String>,
+    traditions: Vec<String>,
 }
 ```
 
-### Matching Algorithm Design
+#### Country
+```rust
+pub struct Country {
+    name: String,
+    flag: String,
+    facts: Vec<String>,
+    traditions: Vec<String>,
+    landmarks: Vec<String>,
+    cuisine: Vec<String>,
+}
+```
+
+### Enhanced Matching Algorithm Design
+- Track user online status in real-time
 - Group users by timezone (±2 hours)
 - Filter by availability and active status
-- Prioritize users who haven't been matched recently
-- Match based on country preferences or interests
+- Score matches based on:
+  - Common interests (weighted)
+  - Timezone compatibility
+  - Recent match history
+  - Random factor for diversity
 - Avoid repeated matches with same users
+- Prioritize users who haven't been matched recently
 
-### Ping Message Scheduling
-- Use Internet Computer timers to schedule pings every 3-4 days
-- Consider timezone differences when sending pings
-- Randomize spotlight countries for cultural diversity
+### Meeting System
+- Generate unique OpenChat meeting links
+- Track meeting status and completion
+- Award Strix points for completed meetings
+- Store cultural information for each match
+- Enable easy reconnection if meeting fails
 
 ## Configuration Details
 
@@ -92,9 +115,22 @@ dfx deploy
 - +10 points for accepting a match
 - +25 points for completing a video chat
 - +5 bonus points for matching with someone from a different continent
+- +2 points for each interest added
+- +15 points for cultural exchange completion
 
-### Deployment Process
-Follow the registration instructions at: https://www.npmjs.com/package/create-openchat-bot 
+### Cultural Database
+- Detailed country information
+- Facts and traditions
+- Landmarks and cuisine
+- Random selection for match notifications
+- Dynamic updates based on user feedback
+
+### OpenChat Integration
+- Proper bot definition endpoint
+- Meeting link generation
+- Community-specific features
+- Enhanced user experience
+- Emoji-rich responses
 
 ## Troubleshooting
 
@@ -128,4 +164,19 @@ pub mod config;
 This allowed our test binaries to properly import and use the project's functionality.
 
 ### Testing Binary Resolution
-For binary files that couldn't access the main crate directly, we created self-contained implementations that don't rely on imports from the main crate. This approach provides better isolation for testing specific components. 
+For binary files that couldn't access the main crate directly, we created self-contained implementations that don't rely on imports from the main crate. This approach provides better isolation for testing specific components.
+
+### OpenChat Registration
+To register the bot with OpenChat:
+
+1. Principal ID: `ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe`
+2. Bot Name: `pingpair_bot`
+3. Endpoint: `https://pingpair-bot.onrender.com`
+4. Community: OpenChat Botathon
+
+Required endpoints:
+- `/.well-known/canister-info`
+- `/.well-known/ic-domains`
+- `/bot_definition`
+- `/openchat-webhook`
+- `/icon.png` 

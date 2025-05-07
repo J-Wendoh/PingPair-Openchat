@@ -12,7 +12,8 @@ PingPair/
 │   │
 │   ├── api/           # API endpoints and handlers
 │   │   ├── mod.rs     # API module exports
-│   │   └── handlers.rs # Command and message handlers
+│   │   ├── handlers.rs # Command and message handlers
+│   │   └── webhook.rs # OpenChat webhook handler
 │   │
 │   ├── commands/      # Bot command implementations
 │   │   ├── mod.rs     # Command module exports
@@ -22,7 +23,18 @@ PingPair/
 │   ├── model/         # Data models and state management
 │   │   ├── mod.rs     # Model module exports
 │   │   ├── state.rs   # Application state management
-│   │   └── types.rs   # Data type definitions
+│   │   ├── types.rs   # Data type definitions
+│   │   └── country.rs # Country database and cultural info
+│   │
+│   ├── matching/      # Matching system
+│   │   ├── mod.rs     # Matching module exports
+│   │   ├── engine.rs  # Matching algorithm
+│   │   └── scoring.rs # Match scoring system
+│   │
+│   ├── meeting/       # Meeting system
+│   │   ├── mod.rs     # Meeting module exports
+│   │   ├── generator.rs # Meeting link generator
+│   │   └── tracker.rs # Meeting status tracker
 │   │
 │   └── bin/           # Binary executables
 │       └── test_ping.rs # Test tool for ping functionality
@@ -62,8 +74,13 @@ main.rs
   │
   ├── api/handlers.rs (API endpoints)
   │   │
-  │   └── model/state.rs (State management)
-  │       └── model/types.rs (Data structures)
+  │   ├── model/state.rs (State management)
+  │   │   └── model/types.rs (Data structures)
+  │   │
+  │   ├── matching/engine.rs (Matching system)
+  │   │   └── matching/scoring.rs (Match scoring)
+  │   │
+  │   └── meeting/generator.rs (Meeting system)
   │
   └── model/state.rs (Initialize state)
 ```
@@ -78,19 +95,25 @@ commands/pingpair.rs
   │       │
   │       └── api/handlers.rs (Command handlers)
   │           │
-  │           └── model/state.rs (User & match management)
+  │           ├── model/state.rs (User & match management)
+  │           │
+  │           ├── matching/engine.rs (Matching system)
+  │           │
+  │           └── meeting/generator.rs (Meeting system)
   │
   └── simulate_ping_time() function
 ```
 
 ## File Sizes
 
-- Main application code: ~10KB
-- Command implementations: ~4KB
-- API handlers: ~7KB
-- Models and state: ~6KB
+- Main application code: ~15KB
+- Command implementations: ~6KB
+- API handlers: ~8KB
+- Models and state: ~7KB
+- Matching system: ~5KB
+- Meeting system: ~4KB
 - Configuration: ~1KB
-- Documentation: ~10KB
+- Documentation: ~12KB
 
 ## Key File Descriptions
 
@@ -107,4 +130,10 @@ Core command implementation for the PingPair bot that handles all user commands.
 Handlers for various bot commands and messages, implementing the business logic for user interactions.
 
 ### src/model/state.rs
-State management functions for users, matches, and sessions. Provides persistent storage for the bot operation. 
+State management functions for users, matches, and sessions. Provides persistent storage for the bot operation.
+
+### src/matching/engine.rs
+Enhanced matching algorithm that considers online status, timezone compatibility, and shared interests.
+
+### src/meeting/generator.rs
+Meeting system that generates and tracks OpenChat meeting links for user matches. 

@@ -18,21 +18,43 @@ app.use(express.json());
 // PING PAIR BOT LOGIC
 const users = new Map();
 const matches = new Map();
+const onlineUsers = new Set();
+const activeMatches = new Map();
 
 // Countries database for spotlights
 const countries = {
-  'Japan': {
-    name: 'Japan',
-    flag: '🇯🇵',
+  'Brazil': {
+    name: 'Brazil',
+    flag: '🇧🇷',
     facts: [
-      'Island nation in East Asia',
-      'Population of about 125 million',
-      'Known for technological innovation and ancient traditions'
+      'Largest country in South America',
+      'Population of about 213 million',
+      'Home to a significant portion of the Amazon rainforest',
+      'Official language is Portuguese',
+      'Known for its vibrant Carnival celebrations',
+      'Has the world\'s largest Catholic population'
     ],
     traditions: [
-      'Tea ceremonies (Chado)',
-      'Cherry blossom (Sakura) viewing',
-      'Traditional arts like origami and calligraphy'
+      'Carnival celebrations',
+      'Samba music and dance',
+      'Soccer (football) culture',
+      'Feijoada (traditional black bean stew)',
+      'Capoeira (martial art)',
+      'Bossa Nova music'
+    ],
+    landmarks: [
+      'Christ the Redeemer statue',
+      'Iguazu Falls',
+      'Amazon Rainforest',
+      'Copacabana Beach',
+      'Sugarloaf Mountain'
+    ],
+    cuisine: [
+      'Feijoada',
+      'Churrasco (Brazilian BBQ)',
+      'Pão de queijo',
+      'Caipirinha',
+      'Brigadeiro'
     ]
   },
   'Kenya': {
@@ -41,31 +63,150 @@ const countries = {
     facts: [
       'East African nation known for wildlife and scenery',
       'Population of about 54 million',
-      'Home to the Great Rift Valley and Lake Victoria'
+      'Home to the Great Rift Valley and Lake Victoria',
+      'Official languages are Swahili and English',
+      'Known for its diverse wildlife and safaris',
+      'Has 42 different ethnic groups'
     ],
     traditions: [
       'Safari tourism',
       'Maasai cultural traditions',
-      'Kenyan long-distance running excellence'
+      'Kenyan long-distance running excellence',
+      'Traditional beadwork',
+      'Swahili coastal culture',
+      'Tribal ceremonies and dances'
+    ],
+    landmarks: [
+      'Mount Kenya',
+      'Maasai Mara National Reserve',
+      'Amboseli National Park',
+      'Lamu Old Town',
+      'Lake Nakuru'
+    ],
+    cuisine: [
+      'Nyama Choma (grilled meat)',
+      'Ugali (cornmeal porridge)',
+      'Sukuma Wiki (collard greens)',
+      'Chapati',
+      'Mandazi (sweet bread)'
     ]
   },
-  'Brazil': {
-    name: 'Brazil',
-    flag: '🇧🇷',
+  'Japan': {
+    name: 'Japan',
+    flag: '🇯🇵',
     facts: [
-      'Largest country in South America',
-      'Population of about 213 million',
-      'Home to a significant portion of the Amazon rainforest'
+      'Island nation in East Asia',
+      'Population of about 125 million',
+      'Known for technological innovation and ancient traditions',
+      'Has the world\'s oldest monarchy',
+      'Known for its efficient public transportation',
+      'Home to Mount Fuji'
     ],
     traditions: [
-      'Carnival celebrations',
-      'Samba music and dance',
-      'Soccer (football) culture'
+      'Tea ceremonies (Chado)',
+      'Cherry blossom (Sakura) viewing',
+      'Traditional arts like origami and calligraphy',
+      'Onsen (hot spring) culture',
+      'Festivals (Matsuri)',
+      'Zen Buddhism practices'
+    ],
+    landmarks: [
+      'Mount Fuji',
+      'Tokyo Skytree',
+      'Fushimi Inari Shrine',
+      'Hiroshima Peace Memorial',
+      'Temple of the Golden Pavilion'
+    ],
+    cuisine: [
+      'Sushi',
+      'Ramen',
+      'Tempura',
+      'Sake',
+      'Matcha tea'
     ]
   }
 };
 
-// Command handlers
+// Function to update user's online status
+function updateUserStatus(userId, isOnline) {
+  if (isOnline) {
+    onlineUsers.add(userId);
+  } else {
+    onlineUsers.delete(userId);
+  }
+}
+
+// Enhanced matching algorithm
+function findMatch(userId) {
+  const user = users.get(userId);
+  if (!user || !user.isActive) return null;
+
+  // Get online users in similar timezone (±2 hours)
+  const potentialMatches = Array.from(onlineUsers)
+    .filter(id => id !== userId)
+    .map(id => users.get(id))
+    .filter(match => {
+      if (!match || !match.isActive) return false;
+      
+      // Check timezone compatibility
+      const timezoneDiff = Math.abs(
+        parseInt(user.timezone.replace('UTC', '')) - 
+        parseInt(match.timezone.replace('UTC', ''))
+      );
+      
+      return timezoneDiff <= 2;
+    });
+
+  if (potentialMatches.length === 0) return null;
+
+  // Prioritize users with similar interests
+  const scoredMatches = potentialMatches.map(match => {
+    const commonInterests = user.interests.filter(interest => 
+      match.interests.includes(interest)
+    ).length;
+    
+    return {
+      user: match,
+      score: commonInterests * 2 + Math.random() // Add some randomness
+    };
+  });
+
+  // Sort by score and pick the best match
+  scoredMatches.sort((a, b) => b.score - a.score);
+  return scoredMatches[0]?.user;
+}
+
+// Function to generate meeting link
+function generateMeetingLink() {
+  // Generate a unique meeting ID
+  const meetingId = Math.random().toString(36).substring(2, 15);
+  return `https://meet.openchat.com/${meetingId}`;
+}
+
+// Enhanced match creation
+function createMatch(user1Id, user2Id) {
+  const matchId = `${user1Id}-${user2Id}-${Date.now()}`;
+  const country = Object.keys(countries)[Math.floor(Math.random() * Object.keys(countries).length)];
+  const meetingLink = generateMeetingLink();
+  
+  const match = {
+    matchId,
+    user1Id,
+    user2Id,
+    country,
+    meetingLink,
+    createdAt: Date.now(),
+    isCompleted: false
+  };
+  
+  matches.set(matchId, match);
+  activeMatches.set(user1Id, matchId);
+  activeMatches.set(user2Id, matchId);
+  
+  return match;
+}
+
+// Enhanced command handlers with ElizaOS integration
 function handleStart(userId) {
   if (!users.has(userId)) {
     users.set(userId, {
@@ -74,20 +215,25 @@ function handleStart(userId) {
       isActive: true,
       timezone: 'UTC',
       interests: [],
-      matchHistory: []
+      matchHistory: [],
+      lastActive: Date.now()
     });
     
+    updateUserStatus(userId, true);
+    
     return {
-      text: "Welcome to PingPair! 🌍✨\n\nI'll connect you with someone from a different part of the world twice a week for cultural exchange meetups.\n\nUse /pingpair profile to set up your profile and start getting matched!"
+      text: "🌟 Welcome to PingPair! 🌍✨\n\nI'll connect you with someone from a different part of the world for cultural exchange meetups.\n\n🎯 You've earned 5 Strix Points for joining!\n\nUse /pingpair profile to set up your profile and start getting matched!"
     };
   }
   
   const user = users.get(userId);
   user.isActive = true;
+  user.lastActive = Date.now();
   users.set(userId, user);
+  updateUserStatus(userId, true);
   
   return {
-    text: "Welcome back to PingPair! You're now active and will receive match notifications. Use /pingpair profile to update your profile."
+    text: "🌟 Welcome back to PingPair! You're now active and will receive match notifications.\n\nUse /pingpair profile to update your profile and start matching!"
   };
 }
 
@@ -97,11 +243,18 @@ function handleProfile(userId, args) {
   }
   
   const user = users.get(userId);
+  user.lastActive = Date.now();
   
   // If no arguments, show current profile
   if (!args || args.length === 0) {
+    const countryInfo = user.country ? countries[user.country] : null;
+    let countryText = '';
+    if (countryInfo) {
+      countryText = `\n🌍 Country: ${countryInfo.flag} ${countryInfo.name}`;
+    }
+    
     return {
-      text: `🌟 **Your PingPair Profile**\n\nTimezone: ${user.timezone}\nInterests: ${user.interests.join(', ') || 'None set'}\nStrix Points: ${user.strixPoints}\nMatches: ${user.matchHistory.length}\n\nUse /pingpair profile add [interest] to add interests`
+      text: `🌟 **Your PingPair Profile**\n\n${countryText}\n⏰ Timezone: ${user.timezone}\n🎯 Interests: ${user.interests.join(', ') || 'None set'}\n✨ Strix Points: ${user.strixPoints}\n🤝 Matches: ${user.matchHistory.length}\n\nUse /pingpair profile add [interest] to add interests`
     };
   }
   
@@ -117,7 +270,7 @@ function handleProfile(userId, args) {
     }
     
     return {
-      text: `Added "${interest}" to your interests! You now have ${user.strixPoints} Strix Points.`
+      text: `✨ Added "${interest}" to your interests! You now have ${user.strixPoints} Strix Points.`
     };
   }
   
@@ -133,10 +286,11 @@ function handleSkip(userId) {
   
   const user = users.get(userId);
   user.skipNextMatch = true;
+  user.lastActive = Date.now();
   users.set(userId, user);
   
   return {
-    text: "You'll skip the next match. Use /pingpair start to activate matching again."
+    text: "⏭️ You'll skip the next match. Use /pingpair start to activate matching again."
   };
 }
 
@@ -146,9 +300,15 @@ function handleStats(userId) {
   }
   
   const user = users.get(userId);
+  user.lastActive = Date.now();
+  
+  const matchHistory = user.matchHistory.map(match => {
+    const country = countries[match.country];
+    return `${country.flag} ${country.name}`;
+  }).join('\n');
   
   return {
-    text: `✨ **Your PingPair Stats**\n\nStrix Points: ${user.strixPoints}\nTotal Matches: ${user.matchHistory.length}\nActive: ${user.isActive ? 'Yes' : 'No'}\n\nKeep participating to earn more Strix Points!`
+    text: `✨ **Your PingPair Stats**\n\n🎯 Strix Points: ${user.strixPoints}\n🤝 Total Matches: ${user.matchHistory.length}\n🌟 Active: ${user.isActive ? 'Yes' : 'No'}\n\n🌍 Match History:\n${matchHistory || 'No matches yet'}\n\nKeep participating to earn more Strix Points!`
   };
 }
 
@@ -158,10 +318,11 @@ function handleTimezone(userId, args) {
   }
   
   const user = users.get(userId);
+  user.lastActive = Date.now();
   
   if (!args || args.length === 0) {
     return {
-      text: `Your current timezone is set to: ${user.timezone}\n\nUse /pingpair timezone [your timezone] to update it.`
+      text: `⏰ Your current timezone is set to: ${user.timezone}\n\nUse /pingpair timezone [your timezone] to update it.`
     };
   }
   
@@ -170,13 +331,17 @@ function handleTimezone(userId, args) {
   users.set(userId, user);
   
   return {
-    text: `Your timezone has been updated to: ${timezone}`
+    text: `⏰ Your timezone has been updated to: ${timezone}`
   };
 }
 
-function handleHelp() {
+// Enhanced match notification
+function sendMatchNotification(userId, match) {
+  const country = countries[match.country];
+  const user = users.get(userId);
+  
   return {
-    text: "**PingPair Bot Commands**\n\n/pingpair start - Begin receiving match pings\n/pingpair profile - View and update profile\n/pingpair skip - Skip current matching cycle\n/pingpair stats - View Strix points and match history\n/pingpair timezone - Update timezone preference"
+    text: `🌟 **PingPair Match!**\n\n🌍 Today's Spotlight: ${country.flag} ${country.name}\n\n📚 Did you know?\n${country.facts[Math.floor(Math.random() * country.facts.length)]}\n\n🎯 Your match is ready!\n\n💬 Meeting Link: ${match.meetingLink}\n\n✨ You'll earn 10 Strix Points for completing this match!`
   };
 }
 
