@@ -95,163 +95,85 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-# PingPair Bot 🌍✨
+# PingPair Bot
 
-A social bot that connects people globally through cultural exchange and blockchain news.
+PingPair is a cultural exchange bot that connects people from around the world for themed, twice-weekly meetups. The bot helps users discover new perspectives by matching them with someone from a different culture or background.
 
-## 🌟 Features
+## Features
 
-### Core Features
-- 🌍 Cultural exchange matching
-- ⏰ Timezone-based matching
-- 🎯 Interest-based pairing
-- 💫 Strix Points reward system
-- 🏆 Achievements and badges
-- 📊 Leaderboards
+- **Global Connections**: Match with users from different countries and cultural backgrounds
+- **Cultural Spotlights**: Learn about featured countries and their traditions
+- **Strix Points**: Earn points by participating in cultural exchange meetups
+- **Profile Management**: Set your interests and timezone for better matches
+- **Timezone Awareness**: Get matched with users at convenient times for both parties
 
-### Community Features
-- 📢 Community announcements
-- 💬 Comment system
-- 👍 Reaction support
-- 🎯 Point rewards for engagement
-- 📋 Announcement sorting
+## Commands
 
-### Blockchain News
-- 📰 Country-specific blockchain news
-- 📅 Daily blockchain digest
-- 🎯 Blockchain knowledge quizzes
-- 🔍 Latest blockchain developments
+- `/pingpair start` - Begin receiving match notifications
+- `/pingpair profile` - View and update your profile
+- `/pingpair skip` - Skip the current matching cycle
+- `/pingpair stats` - View your Strix points and match history
+- `/pingpair timezone` - Update your timezone preference
+- `/pingpair help` - Show available commands
 
-### ElizaOS Integration
-- 🤖 Autonomous agent capabilities
-- 🧠 Character-driven interactions
-- 🔄 Cultural provider integration
-- 🔗 Internet Computer deployment
-- 🛠️ Custom action handlers
+## Setup
 
-## 🚀 Quick Start
+### Prerequisites
 
-1. Clone the repository:
+- Node.js 18.x or higher
+- Internet Computer (IC) setup (for canister deployment)
+- PEM identity file
+
+### Installation
+
+1. Clone the repository
    ```bash
-   git clone https://github.com/J-Wendoh/PingPair-Openchat.git
-   cd ping-pair-bot
+   git clone https://github.com/yourusername/pingpair-bot.git
+   cd pingpair-bot
    ```
 
-2. Install dependencies:
+2. Install dependencies
    ```bash
    npm install
    ```
 
-3. Set up environment variables:
+3. Copy .env.example to .env and configure your environment variables
    ```bash
    cp .env.example .env
-   # Edit .env with your configuration
    ```
 
-4. Start the server:
+4. Run the server
    ```bash
    npm start
    ```
 
-5. For ElizaOS integration:
-   ```bash
-   cd elizaos
-   npm install
-   # Run ElizaOS setup
-   bash setup.sh
-   ```
+### OpenChat Registration
 
-## 📚 Documentation
+To register your bot with OpenChat:
 
-### User Guides
-- [Setup Guide](docs/guides/setup.md)
-- [Command Guide](docs/guides/commands.md)
-- [API Documentation](docs/api/endpoints.md)
+1. Ensure your server is running and publicly accessible
+2. In OpenChat, use the command: `/register_bot PingPair https://your-server-url.com`
 
-### Developer Resources
-- [Architecture Overview](docs/dev/architecture.md)
-- [Contributing Guide](docs/dev/contributing.md)
-- [Project Roadmap](docs/project/roadmap.md)
-- [ElizaOS Integration](docs/dev/dev-notes.md)
+## Development
 
-## 🤖 Commands
+### Project Structure
 
-### Core Commands
-- `/pingpair start` - Begin receiving match pings
-- `/pingpair profile` - View and update your profile
-- `/pingpair skip` - Skip current matching cycle
-- `/pingpair stats` - View your stats and match history
-- `/pingpair timezone` - Update your timezone
+- `server.js` - Main Express server with bot logic
+- `src/` - Rust implementation for IC canister
+- `public/` - Static files
+- `config.toml` - Configuration settings
 
-### Social Features
-- `/pingpair achievements` - View available achievements
-- `/pingpair leaderboard` - View top users
-- `/pingpair announce` - Community announcements
-- `/pingpair announce create [title] [content]` - Create new announcement
-- `/pingpair announce view [id]` - View announcement details
-- `/pingpair announce comment [id] [content]` - Add a comment
-- `/pingpair announce react [id] [reaction]` - Add a reaction
+### Testing
 
-### Blockchain News
-- `/pingpair blockchain [country]` - Get blockchain news
-- `/pingpair digest` - Get daily blockchain digest
-- `/pingpair quiz` - Test your blockchain knowledge
-
-## 🏗️ Project Structure
-
-```
-ping-pair-bot/
-├── src/                      # Source code
-│   ├── commands/            # Bot command handlers
-│   ├── services/           # Business logic services
-│   ├── utils/              # Utility functions
-│   └── config/             # Configuration files
-├── elizaos/                # ElizaOS integration
-│   ├── src/                # ElizaOS source code
-│   ├── pingpair.character.json # Character definition
-│   ├── cultural-provider.ts # Cultural data provider
-│   └── match-action.ts     # Match action handler
-├── public/                 # Static files
-├── docs/                   # Documentation
-├── tests/                 # Test files
-└── scripts/              # Utility scripts
+```bash
+node test_server.js
 ```
 
-See [File Tree](docs/file-tree.md) for detailed structure.
+## License
 
-## 🔧 Configuration
+This project is licensed under the AGPL-3.0 License. See the LICENSE file for details.
 
-### Environment Variables
-- `PORT` - Server port (default: 3000)
-- `NODE_ENV` - Environment (development/production)
-- `OPENCHAT_PRINCIPAL` - OpenChat principal ID
-- `BOT_NAME` - Bot display name
-- `BOT_DESCRIPTION` - Bot description
-- `PEM_FILE` - Path to identity PEM file for OpenChat authentication
+## Acknowledgements
 
-### Deployment
-- [Render](https://render.com) configuration in `render.yaml`
-- Environment variables in `.env`
-- Static files in `public/`
-- ElizaOS deployment via Internet Computer
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-See [Contributing Guide](docs/dev/contributing.md) for details.
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- OpenChat for the platform
-- ElizaOS for the autonomous agent framework
-- Community contributors
-- All our users 
+- Developed for the OpenChat Botathon
+- Uses the OpenChat Bot SDK 

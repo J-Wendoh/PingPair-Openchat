@@ -896,50 +896,115 @@ app.get('/', (req, res) => {
   // If the Accept header includes application/json, return the schema
   if (req.headers.accept && req.headers.accept.includes('application/json')) {
     const botSchema = {
-      name: "PingPair Bot",
       description: "Connect people globally through themed cultural exchange meetups",
-      category: "Social & Community",
-      version: "1.0.0",
-      avatar: "https://images.openchat.com/bot/ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe/icon.png",
       commands: [
         {
-          name: "/pingpair start",
-          description: "Begin receiving match pings"
+          name: "start",
+          description: "Begin receiving match pings for cultural exchange meetups",
+          default_role: "Participant",
+          placeholder: "Starting PingPair...",
+          params: [],
+          permissions: {
+            community: 0,
+            chat: 0,
+            message: 0
+          },
+          direct_messages: false
         },
         {
-          name: "/pingpair profile",
-          description: "View and update profile"
+          name: "profile",
+          description: "View and update your profile information for better matches",
+          default_role: "Participant",
+          placeholder: "Loading profile...",
+          params: [
+            {
+              name: "interests",
+              description: "Your interests to help with matching you to like-minded people",
+              required: false,
+              param_type: {
+                StringParam: {
+                  min_length: 0,
+                  max_length: 500,
+                  choices: [],
+                  multi_line: false
+                }
+              }
+            }
+          ],
+          permissions: {
+            community: 0,
+            chat: 0,
+            message: 0
+          },
+          direct_messages: false
         },
         {
-          name: "/pingpair skip",
-          description: "Skip current matching cycle"
+          name: "skip",
+          description: "Skip the current matching cycle when you're busy",
+          default_role: "Participant",
+          placeholder: "Skipping match...",
+          params: [],
+          permissions: {
+            community: 0,
+            chat: 0,
+            message: 0
+          },
+          direct_messages: false
         },
         {
-          name: "/pingpair stats",
-          description: "View Strix points and match history"
+          name: "stats",
+          description: "View your Strix points and match history with other users",
+          default_role: "Participant",
+          placeholder: "Loading stats...",
+          params: [],
+          permissions: {
+            community: 0,
+            chat: 0,
+            message: 0
+          },
+          direct_messages: false
         },
         {
-          name: "/pingpair timezone",
-          description: "Update timezone preference"
+          name: "timezone",
+          description: "Update your timezone preference for better match timing",
+          default_role: "Participant",
+          placeholder: "Updating timezone...",
+          params: [
+            {
+              name: "timezone",
+              description: "Your timezone (e.g., UTC+1, EST) for scheduling meetups",
+              required: true,
+              param_type: {
+                StringParam: {
+                  min_length: 1,
+                  max_length: 50,
+                  choices: [],
+                  multi_line: false
+                }
+              }
+            }
+          ],
+          permissions: {
+            community: 0,
+            chat: 0,
+            message: 0
+          },
+          direct_messages: false
         },
         {
-          name: "/pingpair blockchain",
-          description: "Get blockchain news"
-        },
-        {
-          name: "/pingpair digest",
-          description: "Get daily blockchain digest"
-        },
-        {
-          name: "/pingpair quiz",
-          description: "Test your blockchain knowledge"
-        },
-        {
-          name: "/pingpair announce",
-          description: "Community announcements"
+          name: "help",
+          description: "Show available commands and information about the bot",
+          default_role: "Participant",
+          placeholder: "Loading help information...",
+          params: [],
+          permissions: {
+            community: 0,
+            chat: 0,
+            message: 0
+          },
+          direct_messages: false
         }
-      ],
-      example_commands: ["/pingpair start", "/pingpair profile", "/pingpair stats"]
+      ]
     };
     
     res.json(botSchema);
@@ -989,7 +1054,14 @@ app.get('/.well-known/canister-info', (req, res) => {
   const principal = process.env.PRINCIPAL_ID || 'ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe';
   
   // The format OpenChat expects is *just* the principal as the top-level key
-  res.send(`{"${principal}":{"name":"PingPair Bot","description":"Connect people globally through themed cultural exchange meetups","icon_url":"https://images.openchat.com/bot/ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe/icon.png"}}`);
+  const response = {
+    [principal]: {
+      name: "PingPair Bot",
+      description: "Connect people globally through themed cultural exchange meetups"
+    }
+  };
+  
+  res.send(JSON.stringify(response));
 });
 
 // Simple icon endpoint
@@ -1039,50 +1111,115 @@ app.get('/openchat-debug', (req, res) => {
 // Add dedicated schema endpoint
 app.get('/api/v1/schema', (req, res) => {
   const botSchema = {
-    name: "PingPair Bot",
     description: "Connect people globally through themed cultural exchange meetups",
-    category: "Social & Community",
-    version: "1.0.0",
-    avatar: "https://images.openchat.com/bot/ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe/icon.png",
     commands: [
       {
-        name: "/pingpair start",
-        description: "Begin receiving match pings"
+        name: "start",
+        description: "Begin receiving match pings for cultural exchange meetups",
+        default_role: "Participant",
+        placeholder: "Starting PingPair...",
+        params: [],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       },
       {
-        name: "/pingpair profile",
-        description: "View and update profile"
+        name: "profile",
+        description: "View and update your profile information for better matches",
+        default_role: "Participant",
+        placeholder: "Loading profile...",
+        params: [
+          {
+            name: "interests",
+            description: "Your interests to help with matching you to like-minded people",
+            required: false,
+            param_type: {
+              StringParam: {
+                min_length: 0,
+                max_length: 500,
+                choices: [],
+                multi_line: false
+              }
+            }
+          }
+        ],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       },
       {
-        name: "/pingpair skip",
-        description: "Skip current matching cycle"
+        name: "skip",
+        description: "Skip the current matching cycle when you're busy",
+        default_role: "Participant",
+        placeholder: "Skipping match...",
+        params: [],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       },
       {
-        name: "/pingpair stats",
-        description: "View Strix points and match history"
+        name: "stats",
+        description: "View your Strix points and match history with other users",
+        default_role: "Participant",
+        placeholder: "Loading stats...",
+        params: [],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       },
       {
-        name: "/pingpair timezone",
-        description: "Update timezone preference"
+        name: "timezone",
+        description: "Update your timezone preference for better match timing",
+        default_role: "Participant",
+        placeholder: "Updating timezone...",
+        params: [
+          {
+            name: "timezone",
+            description: "Your timezone (e.g., UTC+1, EST) for scheduling meetups",
+            required: true,
+            param_type: {
+              StringParam: {
+                min_length: 1,
+                max_length: 50,
+                choices: [],
+                multi_line: false
+              }
+            }
+          }
+        ],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       },
       {
-        name: "/pingpair blockchain",
-        description: "Get blockchain news"
-      },
-      {
-        name: "/pingpair digest",
-        description: "Get daily blockchain digest"
-      },
-      {
-        name: "/pingpair quiz",
-        description: "Test your blockchain knowledge"
-      },
-      {
-        name: "/pingpair announce",
-        description: "Community announcements"
+        name: "help",
+        description: "Show available commands and information about the bot",
+        default_role: "Participant",
+        placeholder: "Loading help information...",
+        params: [],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       }
-    ],
-    example_commands: ["/pingpair start", "/pingpair profile", "/pingpair stats"]
+    ]
   };
   
   res.setHeader('Content-Type', 'application/json');
@@ -1093,59 +1230,114 @@ app.get('/api/v1/schema', (req, res) => {
 // Add bot definition endpoint
 app.get('/bot_definition', (req, res) => {
   res.json({
-    name: "PingPair Bot",
     description: "Connect people globally through themed cultural exchange meetups",
-    category: "Social & Community",
-    version: "1.0.0",
-    avatar: "https://pingpair-bot.onrender.com/icon.png",
     commands: [
       {
-        name: "/pingpair start",
-        description: "Begin receiving match pings"
+        name: "start",
+        description: "Begin receiving match pings for cultural exchange meetups",
+        default_role: "Participant",
+        placeholder: "Starting PingPair...",
+        params: [],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       },
       {
-        name: "/pingpair profile",
-        description: "View and update your profile"
+        name: "profile",
+        description: "View and update your profile information for better matches",
+        default_role: "Participant",
+        placeholder: "Loading profile...",
+        params: [
+          {
+            name: "interests",
+            description: "Your interests to help with matching you to like-minded people",
+            required: false,
+            param_type: {
+              StringParam: {
+                min_length: 0,
+                max_length: 500,
+                choices: [],
+                multi_line: false
+              }
+            }
+          }
+        ],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       },
       {
-        name: "/pingpair skip",
-        description: "Skip current matching cycle"
+        name: "skip",
+        description: "Skip the current matching cycle when you're busy",
+        default_role: "Participant",
+        placeholder: "Skipping match...",
+        params: [],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       },
       {
-        name: "/pingpair stats",
-        description: "View your Strix points and match history"
+        name: "stats",
+        description: "View your Strix points and match history with other users",
+        default_role: "Participant",
+        placeholder: "Loading stats...",
+        params: [],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       },
       {
-        name: "/pingpair timezone",
-        description: "Update your timezone preference"
+        name: "timezone",
+        description: "Update your timezone preference for better match timing",
+        default_role: "Participant",
+        placeholder: "Updating timezone...",
+        params: [
+          {
+            name: "timezone",
+            description: "Your timezone (e.g., UTC+1, EST) for scheduling meetups",
+            required: true,
+            param_type: {
+              StringParam: {
+                min_length: 1,
+                max_length: 50,
+                choices: [],
+                multi_line: false
+              }
+            }
+          }
+        ],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       },
       {
-        name: "/pingpair blockchain",
-        description: "Get blockchain news"
-      },
-      {
-        name: "/pingpair digest",
-        description: "Get daily blockchain digest"
-      },
-      {
-        name: "/pingpair quiz",
-        description: "Test your blockchain knowledge"
-      },
-      {
-        name: "/pingpair announce",
-        description: "Community announcements"
+        name: "help",
+        description: "Show available commands and information about the bot",
+        default_role: "Participant",
+        placeholder: "Loading help information...",
+        params: [],
+        permissions: {
+          community: 0,
+          chat: 0,
+          message: 0
+        },
+        direct_messages: false
       }
-    ],
-    example_commands: [
-      "/pingpair start",
-      "/pingpair profile",
-      "/pingpair skip",
-      "/pingpair stats",
-      "/pingpair timezone",
-      "/pingpair blockchain",
-      "/pingpair digest",
-      "/pingpair quiz",
-      "/pingpair announce"
     ]
   });
 });

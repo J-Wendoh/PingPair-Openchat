@@ -115,9 +115,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn bot_definition(State(state): State<Arc<AppState>>) -> (StatusCode, HeaderMap, Bytes) {
     let commands = state.commands.definitions();
     
+    // Ensure each command has permissions set correctly
+    let commands_with_permissions = commands.into_iter()
+        .map(|mut cmd| {
+            if cmd.permissions.is_none() {
+                cmd.permissions = Some(serde_json::json!({
+                    "community": 0,
+                    "chat": 0,
+                    "message": 0
+                }));
+            }
+            cmd
+        })
+        .collect();
+    
     let definition = BotDefinition {
-        description: "PingPair - Connect with people globally through themed, twice-weekly meetups!".to_string(),
-        commands,
+        description: "Connect people globally through themed cultural exchange meetups".to_string(),
+        commands: commands_with_permissions,
         autonomous_config: None,
     };
     
