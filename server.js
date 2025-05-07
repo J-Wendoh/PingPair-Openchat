@@ -469,6 +469,46 @@ app.get('/api/v1/schema', (req, res) => {
   res.json(botSchema);
 });
 
+// Add bot definition endpoint
+app.get('/bot_definition', (req, res) => {
+  res.json({
+    name: "PingPair Bot",
+    description: "Connect people globally through themed cultural exchange meetups",
+    category: "Social & Community",
+    version: "1.0.0",
+    avatar: "https://pingpair-bot.onrender.com/icon.png",
+    commands: [
+      {
+        name: "/pingpair start",
+        description: "Begin receiving match pings"
+      },
+      {
+        name: "/pingpair profile",
+        description: "View and update your profile"
+      },
+      {
+        name: "/pingpair skip",
+        description: "Skip current matching cycle"
+      },
+      {
+        name: "/pingpair stats",
+        description: "View your Strix points and match history"
+      },
+      {
+        name: "/pingpair timezone",
+        description: "Update your timezone preference"
+      }
+    ],
+    example_commands: [
+      "/pingpair start",
+      "/pingpair profile",
+      "/pingpair skip",
+      "/pingpair stats",
+      "/pingpair timezone"
+    ]
+  });
+});
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
