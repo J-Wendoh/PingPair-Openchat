@@ -347,7 +347,7 @@ app.get('/.well-known/canister-info', (req, res) => {
   const principal = process.env.PRINCIPAL_ID || 'ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe';
   
   // The format OpenChat expects is *just* the principal as the top-level key
-  res.send(`{"${principal}":{"name":"PingPair Bot","description":"Connect people globally through themed cultural exchange meetups"}}`);
+  res.send(`{"${principal}":{"name":"PingPair Bot","description":"Connect people globally through themed cultural exchange meetups","icon_url":"https://images.openchat.com/bot/ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe/icon.png"}}`);
 });
 
 // Simple icon endpoint
@@ -355,8 +355,8 @@ app.get('/icon.png', (req, res) => {
   // Set the content type
   res.setHeader('Content-Type', 'image/png');
   
-  // Use a public placeholder instead
-  res.redirect('https://placehold.co/256x256/3498db/FFFFFF.png?text=PingPair');
+  // Use the official PingPair logo 
+  res.redirect('https://images.openchat.com/bot/ovisk-nbx7l-fjqw2-kgmmx-2qlia-s6qcu-yvloi-ejji5-hw5bv-lmcak-dqe/icon.png');
 });
 
 // Additional diagnostic endpoint
