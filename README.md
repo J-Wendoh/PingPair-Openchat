@@ -122,6 +122,13 @@ A social bot that connects people globally through cultural exchange and blockch
 - 🎯 Blockchain knowledge quizzes
 - 🔍 Latest blockchain developments
 
+### ElizaOS Integration
+- 🤖 Autonomous agent capabilities
+- 🧠 Character-driven interactions
+- 🔄 Cultural provider integration
+- 🔗 Internet Computer deployment
+- 🛠️ Custom action handlers
+
 ## 🚀 Quick Start
 
 1. Clone the repository:
@@ -146,6 +153,14 @@ A social bot that connects people globally through cultural exchange and blockch
    npm start
    ```
 
+5. For ElizaOS integration:
+   ```bash
+   cd elizaos
+   npm install
+   # Run ElizaOS setup
+   bash setup.sh
+   ```
+
 ## 📚 Documentation
 
 ### User Guides
@@ -157,6 +172,7 @@ A social bot that connects people globally through cultural exchange and blockch
 - [Architecture Overview](docs/dev/architecture.md)
 - [Contributing Guide](docs/dev/contributing.md)
 - [Project Roadmap](docs/project/roadmap.md)
+- [ElizaOS Integration](docs/dev/dev-notes.md)
 
 ## 🤖 Commands
 
@@ -190,6 +206,11 @@ ping-pair-bot/
 │   ├── services/           # Business logic services
 │   ├── utils/              # Utility functions
 │   └── config/             # Configuration files
+├── elizaos/                # ElizaOS integration
+│   ├── src/                # ElizaOS source code
+│   ├── pingpair.character.json # Character definition
+│   ├── cultural-provider.ts # Cultural data provider
+│   └── match-action.ts     # Match action handler
 ├── public/                 # Static files
 ├── docs/                   # Documentation
 ├── tests/                 # Test files
@@ -206,11 +227,13 @@ See [File Tree](docs/file-tree.md) for detailed structure.
 - `OPENCHAT_PRINCIPAL` - OpenChat principal ID
 - `BOT_NAME` - Bot display name
 - `BOT_DESCRIPTION` - Bot description
+- `PEM_FILE` - Path to identity PEM file for OpenChat authentication
 
 ### Deployment
 - [Render](https://render.com) configuration in `render.yaml`
 - Environment variables in `.env`
 - Static files in `public/`
+- ElizaOS deployment via Internet Computer
 
 ## 🤝 Contributing
 
@@ -229,5 +252,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - OpenChat for the platform
+- ElizaOS for the autonomous agent framework
 - Community contributors
 - All our users 

@@ -7,6 +7,7 @@
 - Git
 - OpenChat account
 - Render.com account (for deployment)
+- DFX (for Internet Computer deployment and identity management)
 
 ## Local Development Setup
 
@@ -37,6 +38,50 @@
 4. **Start Development Server**
    ```bash
    npm run dev
+   ```
+
+## ElizaOS Integration Setup
+
+1. **Setup DFX Identity**
+   ```bash
+   # Create a new identity for your bot
+   dfx identity new pingpair_identity
+   
+   # Export the identity to PEM format
+   dfx identity export pingpair_identity > identity.pem
+   
+   # Make sure the PEM file is in the root directory or update .env accordingly
+   ```
+
+2. **Configure ElizaOS**
+   ```bash
+   # Navigate to ElizaOS directory
+   cd elizaos
+   
+   # Install dependencies
+   npm install
+   
+   # Run the setup script
+   bash setup.sh
+   ```
+
+3. **Customize Character File**
+   - Edit `elizaos/pingpair.character.json` to customize your bot's:
+     - Personality
+     - Actions
+     - Plugins
+     - System prompts
+
+4. **Run ElizaOS Bot**
+   ```bash
+   # From the elizaos directory
+   npm start
+   ```
+
+5. **Deploy to Internet Computer (Optional)**
+   ```bash
+   # Make sure dfx is installed and configured
+   dfx deploy
    ```
 
 ## OpenChat Integration
@@ -74,6 +119,7 @@
    OPENCHAT_PRINCIPAL=your-principal-id
    BOT_NAME=PingPair
    BOT_DESCRIPTION="Connect globally through cultural exchange"
+   PEM_FILE=./identity.pem
    ```
 
 3. **Verify Deployment**
@@ -115,9 +161,16 @@
    - Verify environment variables
    - Check build process
 
+4. **ElizaOS Integration Issues**
+   - Check DFX identity setup
+   - Verify PEM file path
+   - Check character file format
+   - Verify Internet Computer connectivity
+
 ### Support
 
 For additional help:
-- Check [API Documentation](api/endpoints.md)
+- Check [API Documentation](../api/endpoints.md)
 - Review [Command Guide](commands.md)
+- See [ElizaOS Integration](../dev/dev-notes.md)
 - Open an issue on GitHub 
