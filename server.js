@@ -1290,11 +1290,6 @@ app.get('/', (req, res) => {
   if (req.headers.accept && req.headers.accept.includes('application/json')) {
     const botSchema = {
       description: "Connect people globally through themed cultural exchange meetups",
-      permissions: {
-        community: 0,
-        chat: 0,
-        message: 0
-      },
       commands: [
         {
           name: "start",
@@ -1564,11 +1559,6 @@ app.get('/openchat-debug', (req, res) => {
 app.get('/api/v1/schema', (req, res) => {
   const botSchema = {
     description: "Connect people globally through themed cultural exchange meetups",
-    permissions: {
-      community: 0,
-      chat: 0,
-      message: 0
-    },
     commands: [
       {
         name: "start",
@@ -1740,13 +1730,8 @@ app.get('/api/v1/schema', (req, res) => {
 
 // Add bot definition endpoint
 app.get('/bot_definition', (req, res) => {
-  res.json({
+  const schema = {
     description: "Connect people globally through themed cultural exchange meetups",
-    permissions: {
-      community: 0,
-      chat: 0,
-      message: 0
-    },
     commands: [
       {
         name: "start",
@@ -1909,7 +1894,8 @@ app.get('/bot_definition', (req, res) => {
         direct_messages: false
       }
     ]
-  });
+  };
+  res.json(schema);
 });
 
 // Add new command for achievements
