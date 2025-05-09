@@ -1411,7 +1411,14 @@ app.get('/', (req, res) => {
                 StringParam: {
                   min_length: 1,
                   max_length: 1,
-                  choices: ["3", "4", "5", "6", "7", "8"],
+                  choices: [
+                    { name: "3 participants", value: "3" },
+                    { name: "4 participants", value: "4" },
+                    { name: "5 participants", value: "5" },
+                    { name: "6 participants", value: "6" },
+                    { name: "7 participants", value: "7" },
+                    { name: "8 participants", value: "8" }
+                  ],
                   multi_line: false
                 }
               }
@@ -1680,7 +1687,14 @@ app.get('/api/v1/schema', (req, res) => {
               StringParam: {
                 min_length: 1,
                 max_length: 1,
-                choices: ["3", "4", "5", "6", "7", "8"],
+                choices: [
+                  { name: "3 participants", value: "3" },
+                  { name: "4 participants", value: "4" },
+                  { name: "5 participants", value: "5" },
+                  { name: "6 participants", value: "6" },
+                  { name: "7 participants", value: "7" },
+                  { name: "8 participants", value: "8" }
+                ],
                 multi_line: false
               }
             }
@@ -1853,7 +1867,14 @@ app.get('/bot_definition', (req, res) => {
               StringParam: {
                 min_length: 1,
                 max_length: 1,
-                choices: ["3", "4", "5", "6", "7", "8"],
+                choices: [
+                  { name: "3 participants", value: "3" },
+                  { name: "4 participants", value: "4" },
+                  { name: "5 participants", value: "5" },
+                  { name: "6 participants", value: "6" },
+                  { name: "7 participants", value: "7" },
+                  { name: "8 participants", value: "8" }
+                ],
                 multi_line: false
               }
             }
