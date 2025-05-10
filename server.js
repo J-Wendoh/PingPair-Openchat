@@ -1186,7 +1186,7 @@ function handleBotEvent(event) {
                 return handleBlockchainQuiz(initiator);
               case 'announce':
                 return handleAnnouncements(initiator, args.slice(1));
-              case 'group-match':
+              case 'match':
                 return handleGroupMatchCommand(initiator, args.slice(1));
               case 'language':
                 return handleLanguageCommand(initiator, args.slice(1));
@@ -1230,7 +1230,7 @@ function handleBotEvent(event) {
             return handleBlockchainQuiz(initiator);
           case 'announce':
             return handleAnnouncements(initiator, args.slice(1));
-          case 'group-match':
+          case 'match':
             return handleGroupMatchCommand(initiator, args.slice(1));
           case 'language':
             return handleLanguageCommand(initiator, args.slice(1));
@@ -1398,7 +1398,7 @@ app.get('/', (req, res) => {
           direct_messages: false
         },
         {
-          name: "group-match",
+          name: "match",
           description: "Create a group match with multiple participants based on shared interests",
           default_role: "Participant",
           placeholder: "Finding group participants...",
@@ -1674,7 +1674,7 @@ app.get('/api/v1/schema', (req, res) => {
         direct_messages: false
       },
       {
-        name: "group-match",
+        name: "match",
         description: "Create a group match with multiple participants based on shared interests",
         default_role: "Participant",
         placeholder: "Finding group participants...",
@@ -1854,7 +1854,7 @@ app.get('/bot_definition', (req, res) => {
         direct_messages: false
       },
       {
-        name: "group-match",
+        name: "match",
         description: "Create a group match with multiple participants based on shared interests",
         default_role: "Participant",
         placeholder: "Finding group participants...",
