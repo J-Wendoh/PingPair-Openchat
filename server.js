@@ -489,90 +489,138 @@ async function handleMatchCommand(userId, params) {
 
 // Enhanced command handlers with ElizaOS integration
 function handleStart(userId) {
+  console.log(`Starting user ${userId}`);
+  
+  // Create user if not exists
   if (!users.has(userId)) {
     users.set(userId, createUser(userId));
-    
-    updateUserStatus(userId, true);
-    
-    return {
-      text: "🌟 Welcome to PingPair! 🌍✨\n\nI'll connect you with someone from a different part of the world for cultural exchange meetups.\n\n🎯 You've earned 5 Strix Points for joining!\n\nUse /pingpair profile to set up your profile and start getting matched!"
-    };
+    console.log(`Created new user: ${userId}`);
+  } else {
+    // Update existing user
+    const user = users.get(userId);
+    user.isActive = true;
+    user.lastActive = Date.now();
+    console.log(`Updated existing user: ${userId}`);
   }
   
-  const user = users.get(userId);
-  user.isActive = true;
-  user.lastActive = Date.now();
-  users.set(userId, user);
-  updateUserStatus(userId, true);
+  // Use ElizaOS data
+  const conversationStarters = elizaOS?.getConversationStarters() || 
+    ["What are your interests?", "What brings you here today?"];
   
-  return {
-    text: "🌟 Welcome back to PingPair! You're now active and will receive match notifications.\n\nUse /pingpair profile to update your profile and start matching!"
-  };
+  // Generate welcome message
+  const welcomeMessage = `
+# Welcome to PingPair! 🌍✨
+
+Great news! You've successfully joined PingPair and earned 5 Strix points! 
+
+You'll receive your first Ping notification in the next matching cycle.
+
+### Next Step: Complete Your Profile
+
+Tell us about yourself! This helps create better matches and more meaningful connections.
+
+Type \`/pingpair profile\` to set up your profile now!
+
+### Conversation starters:
+${conversationStarters.map(starter => `- ${starter}`).join('\n')}
+  `;
+  
+  console.log(`Returning welcome message for: ${userId}`);
+  return { text: welcomeMessage };
 }
 
 function handleProfile(userId, args) {
+  console.log(`Profile command: ${userId}, args:`, JSON.stringify(args));
+  
+  // Create user if not exists
   if (!users.has(userId)) {
-    return handleStart(userId);
+    users.set(userId, createUser(userId));
   }
   
   const user = users.get(userId);
   user.lastActive = Date.now();
   
-  // If no arguments, show current profile
-  if (!args || args.length === 0) {
-    const countryInfo = user.country ? countries[user.country] : null;
-    let countryText = '';
-    if (countryInfo) {
-      countryText = `\n🌍 Country: ${countryInfo.flag} ${countryInfo.name}`;
-    }
+  // Handle arguments
+  if (args && args.length > 0) {
+    // Process args that could be either string arrays or object arrays with name/value
+    let field, value;
     
-    // Format achievements
-    const achievementsText = user.achievements.length > 0 ?
-      `\n🏆 Achievements:\n${user.achievements.map(a => `- ${a.name}: ${a.description}`).join('\n')}` : '';
-    
-    // Format badges
-    const badgesText = user.badges.length > 0 ?
-      `\n🎖️ Badges:\n${user.badges.join(' ')}` : '';
-    
-    // Format streak
-    const streakText = user.streak > 0 ?
-      `\n🔥 Current Streak: ${user.streak} days` : '';
-    
-    // Format level
-    const levelText = `\n⭐ Level ${user.level} (${user.xp} XP)`;
-    
-    return {
-      text: `🌟 **Your PingPair Profile**\n\n${countryText}\n⏰ Timezone: ${user.timezone}\n🎯 Interests: ${user.interests.join(', ') || 'None set'}\n✨ Strix Points: ${user.strixPoints}${levelText}${streakText}${achievementsText}${badgesText}\n\n🤝 Matches: ${user.matchHistory.length}\n\nUse /pingpair profile add [interest] to add interests`
-    };
-  }
-  
-  // Handle profile subcommands
-  const subCmd = args[0];
-  
-  if (subCmd === 'add' && args.length > 1) {
-    const interest = args.slice(1).join(' ');
-    if (!user.interests.includes(interest)) {
-      user.interests.push(interest);
-      user.strixPoints += 1;
-      user.xp += 5;
+    // Handle both old and new argument formats
+    if (typeof args[0] === 'string') {
+      // Old format: array of strings
+      field = args[0].toLowerCase();
+      value = args.slice(1).join(' ');
+    } else if (args[0] && args[0].name) {
+      // New format: array of objects with name property
+      field = args[0].name.toLowerCase();
       
-      // Check for level up
-      if (user.xp >= user.level * 100) {
-        user.level++;
-        user.badges.push('🎯');
+      // Check if there's a value property
+      if (args[0].value !== undefined) {
+        value = args[0].value;
+      } else if (args.length > 1) {
+        // Try to get values from remaining args
+        value = args.slice(1).map(arg => arg.name || arg.value || '').join(' ');
+      } else {
+        value = '';
       }
-      
-      users.set(userId, user);
     }
     
-    return {
-      text: `✨ Added "${interest}" to your interests! You now have ${user.strixPoints} Strix Points and ${user.xp} XP.`
-    };
+    console.log(`Processing profile field: ${field}, value: ${value}`);
+    
+    // Update the user's profile based on the field
+    switch (field) {
+      case 'country':
+        if (value) {
+          user.country = value;
+          return {
+            text: `Your country has been set to: ${value} 🌍\n\nThis will help match you with people interested in your culture!`
+          };
+        }
+        break;
+        
+      case 'interests':
+        if (value) {
+          user.interests = value.split(',').map(i => i.trim());
+          return {
+            text: `Your interests have been updated to: ${user.interests.join(', ')}\n\nThis will help us find better matches for you!`
+          };
+        }
+        break;
+        
+      case 'bio':
+        if (value) {
+          user.bio = value;
+          return {
+            text: `Your bio has been updated.\n\nThank you for sharing about yourself!`
+          };
+        }
+        break;
+    }
   }
   
-  return {
-    text: "To update your profile, use:\n/pingpair profile add [interest]"
-  };
+  // Display profile if no arguments or invalid arguments
+  const profileText = `
+# Your PingPair Profile 👤
+
+**Country:** ${user.country || 'Not set'}
+**Timezone:** ${user.timezone || 'UTC'}
+**Strix Points:** ${user.strixPoints || 0} ⭐
+**Active Status:** ${user.isActive ? '✅ Active' : '❌ Inactive'}
+
+**Interests:** ${user.interests && user.interests.length > 0 ? user.interests.join(', ') : 'None set'}
+**Bio:** ${user.bio || 'None set'}
+
+**Match History:** ${user.matchHistory ? user.matchHistory.length : 0} connections
+
+## How to Update:
+- \`/pingpair profile country [Your country]\`
+- \`/pingpair profile interests [comma-separated interests]\`
+- \`/pingpair profile bio [Your short bio]\`
+
+Complete your profile to get better matches!
+  `;
+  
+  return { text: profileText };
 }
 
 function handleSkip(userId) {
@@ -1141,7 +1189,68 @@ function handleBotEvent(event) {
     } else {
       eventData = event;
     }
+
+    // OpenChat specific format handling
+    if (eventData.command) {
+      console.log('Detected OpenChat command format:', JSON.stringify(eventData.command));
+      // Extract command data directly from the OpenChat format
+      const command = eventData.command;
+      
+      // Args from OpenChat will be in command.args array with name and value props
+      const args = command.args || [];
+      console.log('Command args:', JSON.stringify(args));
+      
+      // Check if this is our bot's command
+      if (command.name === 'pingpair') {
+        // Get subcommand from the first argument
+        if (args.length > 0) {
+          const subCommand = args[0].name;
+          console.log('Subcommand:', subCommand);
+          
+          // Extract remaining args (if needed)
+          const remainingArgs = args.slice(1);
+          
+          // Process based on subcommand
+          switch (subCommand) {
+            case 'start':
+              return handleStart(command.initiator);
+            case 'profile':
+              return handleProfile(command.initiator, remainingArgs);
+            case 'skip':
+              return handleSkip(command.initiator);
+            case 'stats':
+              return handleStats(command.initiator);
+            case 'timezone':
+              return handleTimezone(command.initiator, remainingArgs);
+            case 'achievements':
+              return handleAchievements(command.initiator);
+            case 'leaderboard':
+              return handleLeaderboard(command.initiator);
+            case 'blockchain':
+              return handleBlockchainNews(command.initiator, remainingArgs);
+            case 'digest':
+              return handleDailyDigest(command.initiator);
+            case 'quiz':
+              return handleBlockchainQuiz(command.initiator);
+            case 'announce':
+              return handleAnnouncements(command.initiator, remainingArgs);
+            case 'match':
+              return handleGroupMatchCommand(command.initiator, remainingArgs);
+            case 'language':
+              return handleLanguageCommand(command.initiator, remainingArgs);
+            default:
+              return handleHelp();
+          }
+        } else {
+          return handleHelp();
+        }
+      } else if (command.name) {
+        console.log('Unknown command name:', command.name);
+        return { text: `Unknown command: ${command.name}. Try using \`/pingpair help\` to see available commands.` };
+      }
+    }
     
+    // Legacy handling for old format
     // If this is OpenChat event format
     if (eventData.event) {
       try {
@@ -1200,7 +1309,7 @@ function handleBotEvent(event) {
       }
     }
     
-    // Handle our simplified format
+    // Handle simplified format
     // Handle command
     if (eventData.type === 'command' || eventData.command) {
       const initiator = eventData.initiator || eventData.command?.initiator || 'user123';
@@ -1245,10 +1354,11 @@ function handleBotEvent(event) {
       return { text: "Use /pingpair commands to interact with PingPair bot!" };
     }
     
+    // Default response if no other handlers matched
     return { text: "I'm PingPair bot! Use /pingpair commands to interact with me." };
   } catch (error) {
     console.error('Error parsing event:', error);
-    return { error: 'Failed to process event', details: error.message };
+    return { error: 'Failed to process event', details: error.message, text: "Sorry, there was an error processing your request." };
   }
 }
 
@@ -1268,19 +1378,60 @@ app.post('/openchat-webhook', (req, res) => {
     console.log('Headers:', JSON.stringify(req.headers));
     console.log('Body:', JSON.stringify(req.body));
     
-    // Get the response from the handler
-    const response = handleBotEvent(req.body);
+    // Validate the request body
+    if (!req.body) {
+      console.error('Missing request body');
+      return res.status(400).json({ error: 'Missing request body' });
+    }
     
-    // Add appropriate CORS headers for OpenChat
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    // Extract the JWT token from header if present (for proper auth)
+    const jwt = req.headers['x-oc-jwt'];
+    if (jwt) {
+      console.log('JWT token received, length:', jwt.length);
+      // In a production environment, verify the JWT signature
+      // For this demo, we'll just log it and proceed
+    }
     
-    console.log('Response:', JSON.stringify(response));
-    res.json(response);
+    // Handle the command with proper error handling
+    try {
+      // Get the response from the handler
+      const response = handleBotEvent(req.body);
+      
+      // Ensure the response is properly formatted
+      let formattedResponse;
+      if (typeof response === 'string') {
+        formattedResponse = { text: response };
+      } else if (response && typeof response === 'object') {
+        formattedResponse = response;
+      } else {
+        formattedResponse = { text: "Command processed successfully!" };
+      }
+      
+      // Add appropriate CORS headers for OpenChat
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-oc-jwt');
+      res.header('Content-Type', 'application/json');
+      
+      console.log('Response:', JSON.stringify(formattedResponse));
+      
+      // Ensure we always return a status code along with the response
+      return res.status(200).json(formattedResponse);
+    } catch (handlerError) {
+      console.error('Error in command handler:', handlerError);
+      return res.status(500).json({ 
+        error: 'Command processing failed', 
+        details: handlerError.message,
+        text: "Sorry, there was a problem processing your command. Please try again." 
+      });
+    }
   } catch (error) {
-    console.error('Error handling event:', error);
-    res.status(500).json({ error: 'Failed to process event', details: error.message });
+    console.error('Critical error handling event:', error);
+    return res.status(500).json({ 
+      error: 'Failed to process event', 
+      details: error.message,
+      text: "Sorry, there was a problem with the bot. Please try again later." 
+    });
   }
 });
 
@@ -2060,30 +2211,38 @@ function handleBlockchainQuiz(userId) {
 
 // Update help command with new features
 function handleHelp() {
-  return {
-    text: `🌟 **PingPair Bot Commands**\n\n` +
-          `🎯 Core Commands:\n` +
-          `/pingpair start - Begin receiving match pings\n` +
-          `/pingpair profile - View and update your profile\n` +
-          `/pingpair skip - Skip current matching cycle\n` +
-          `/pingpair stats - View your stats and match history\n` +
-          `/pingpair timezone - Update your timezone\n\n` +
-          `🏆 Social Features:\n` +
-          `/pingpair achievements - View available achievements\n` +
-          `/pingpair leaderboard - View top users\n` +
-          `/pingpair announce - Community announcements\n\n` +
-          `📰 Blockchain News:\n` +
-          `/pingpair blockchain [country] - Get blockchain news\n` +
-          `/pingpair digest - Get daily blockchain digest\n` +
-          `/pingpair quiz - Test your blockchain knowledge\n\n` +
-          `✨ Earn Strix Points and achievements by:\n` +
-          `- Completing matches\n` +
-          `- Maintaining streaks\n` +
-          `- Reading blockchain news\n` +
-          `- Taking blockchain quizzes\n` +
-          `- Creating announcements\n` +
-          `- Adding interests to your profile`
-  };
+  const helpText = `
+# PingPair Bot - Help 🌍✨
+
+## Core Commands
+- \`/pingpair start\` - Begin receiving match pings
+- \`/pingpair profile\` - View and update your profile
+- \`/pingpair profile country [country]\` - Set your country
+- \`/pingpair profile interests [list]\` - Update your interests
+- \`/pingpair profile bio [text]\` - Set your bio
+- \`/pingpair skip\` - Skip the current matching cycle
+- \`/pingpair stats\` - View your Strix network score
+- \`/pingpair timezone [zone]\` - Set your timezone
+
+## Match Commands
+- \`/pingpair match\` - Create a group match
+- \`/pingpair match [size]\` - Create a match with specific size
+
+## Social Features
+- \`/pingpair achievements\` - View available achievements
+- \`/pingpair leaderboard\` - See the global leaderboard
+- \`/pingpair announce\` - View community announcements
+- \`/pingpair language [code]\` - Set your language preference
+
+## Discovery Features
+- \`/pingpair blockchain\` - Get latest blockchain news
+- \`/pingpair digest\` - Get your daily blockchain digest
+- \`/pingpair quiz\` - Take a blockchain knowledge quiz
+
+Need more help? Visit our website at https://pingpair.example.com
+`;
+
+  return { text: helpText };
 }
 
 // Database integration for persistent storage
