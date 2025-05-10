@@ -28,6 +28,115 @@ PingPair Bot
 └── OpenChat Integration
 ```
 
+## OpenChat Integration
+
+### Webhook Implementation
+
+The PingPair bot integrates with OpenChat through a dedicated webhook endpoint. The implementation allows the bot to receive and process commands from OpenChat users.
+
+#### Webhook Architecture
+
+```
+OpenChat → Webhook Endpoint → Command Processing → Response Formatting → OpenChat
+```
+
+#### Command Processing Flow
+
+1. **Webhook Receives Request**: OpenChat sends a POST request to the webhook endpoint
+2. **Request Validation**: Verify content type and structure
+3. **Command Extraction**: Parse command name and arguments
+4. **Command Processing**: Route to appropriate handler
+5. **Response Formatting**: Format response for OpenChat
+6. **Response Return**: Send formatted response back to OpenChat
+
+#### Recent Updates (2023-11-10)
+
+We've improved the OpenChat integration in several key ways:
+
+1. **Command Format Compatibility**:
+   - Updated webhook handler to properly process OpenChat's command format
+   - Added support for both object-based arguments (new format) and string-based arguments (old format)
+   - Implemented named parameter extraction from object arguments
+
+2. **Enhanced Error Handling**:
+   - Added structured error logging throughout the webhook processing flow
+   - Implemented validation for request body and command structure
+   - Added graceful error responses with helpful user feedback
+   - Included JWT token extraction (foundation for future authentication)
+
+3. **Command Handler Updates**:
+   - Refactored key commands to support the new argument format
+   - Enhanced `handleProfile`, `handleTimezone`, `handleBlockchainNews`, and `handleAnnouncements`
+   - Added better validation for command arguments
+   - Improved response formatting with markdown for better readability in OpenChat
+
+4. **User Experience Improvements**:
+   - Updated help text with better formatting and command examples
+   - Added backtick formatting for command examples
+   - Enhanced feedback for successful command execution
+   - Added points tracking with explicit feedback on points earned
+
+```javascript
+// Example OpenChat command format:
+{
+  "command": {
+    "name": "pingpair",
+    "initiator": "user123",
+    "args": [
+      {
+        "name": "profile",
+      },
+      {
+        "name": "interests",
+        "value": "blockchain, tech, travel"
+      }
+    ]
+  }
+}
+```
+
+### Command Argument Processing
+
+To support OpenChat's new object-based argument format while maintaining backward compatibility, we implemented a dual-processing approach:
+
+```javascript
+// Processing both argument formats
+function processArgs(args) {
+  let processedValues = {};
+  
+  if (args && args.length > 0) {
+    // Check if we have the new format (objects with name/value)
+    if (typeof args[0] === 'object' && args[0] !== null) {
+      // Extract from named arguments
+      args.forEach(arg => {
+        if (arg.name && arg.value) {
+          processedValues[arg.name] = arg.value;
+        }
+      });
+    } else {
+      // Process traditional string arguments
+      // Example implementation varies by command
+    }
+  }
+  
+  return processedValues;
+}
+```
+
+### Security Considerations
+
+- Added extraction of JWT tokens for future authentication implementation
+- Implemented input validation to prevent injection attacks
+- Added structured error handling to prevent information leakage
+
+### Future Improvements
+
+1. **Full JWT Validation**: Implement complete validation of JWT tokens
+2. **Rate Limiting**: Add protection against abuse
+3. **Analytics**: Track command usage for optimization
+4. **Enhanced Validation**: More robust parameter validation
+5. **Command Aliases**: Support for alternative command names
+
 ## Architecture Overview
 
 The PingPair bot is built with a modular architecture to ensure scalability, maintainability, and real-time performance:
