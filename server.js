@@ -663,25 +663,45 @@ function handleStats(userId) {
 }
 
 function handleTimezone(userId, args) {
+  console.log('Timezone command:', JSON.stringify(args));
+  
+  // Create user if they don't exist
   if (!users.has(userId)) {
-    return handleStart(userId);
+    users.set(userId, createUser(userId));
   }
   
   const user = users.get(userId);
   user.lastActive = Date.now();
   
-  if (!args || args.length === 0) {
+  // Process timezone from args - handle both formats
+  let timezone = '';
+  
+  if (args && args.length > 0) {
+    // Check if we have the new format (objects with name/value)
+    if (typeof args[0] === 'object' && args[0] !== null) {
+      // New OpenChat format - object with name/value
+      const tzArg = args.find(arg => arg.name === 'timezone' || arg.name === 'tz');
+      if (tzArg && tzArg.value) {
+        timezone = tzArg.value;
+      }
+    } else {
+      // Old format - just strings
+      timezone = args.join(' ');
+    }
+  }
+  
+  if (!timezone) {
     return {
-      text: `⏰ Your current timezone is set to: ${user.timezone}\n\nUse /pingpair timezone [your timezone] to update it.`
+      text: `⏰ **Timezone Settings**\n\nYour current timezone is set to: **${user.timezone}**\n\nTo update your timezone, use:\n\`/pingpair timezone timezone:America/New_York\`\n\nTimezone examples:\n- America/New_York\n- Europe/London\n- Asia/Tokyo\n- Australia/Sydney`
     };
   }
   
-  const timezone = args.join(' ');
+  // Update user timezone
   user.timezone = timezone;
   users.set(userId, user);
   
   return {
-    text: `⏰ Your timezone has been updated to: ${timezone}`
+    text: `⏰ **Timezone Updated**\n\nYour timezone has been set to: **${timezone}**\n\nThis helps us match you with users in compatible time zones!`
   };
 }
 
@@ -769,15 +789,45 @@ function addReaction(announcementId, userId, reaction) {
 
 // Handle community announcements command
 function handleAnnouncements(userId, args) {
+  console.log('Announcements command:', JSON.stringify(args));
+  
+  // Create user if they don't exist
   if (!users.has(userId)) {
-    return handleStart(userId);
+    users.set(userId, createUser(userId));
   }
   
   const user = users.get(userId);
   user.lastActive = Date.now();
   
-  // If no arguments, show all announcements
-  if (!args || args.length === 0) {
+  // Process args to extract subcommand and parameters - handle both formats
+  let subCmd = '';
+  let params = [];
+  
+  if (args && args.length > 0) {
+    // Check if we have the new format (objects with name/value)
+    if (typeof args[0] === 'object' && args[0] !== null) {
+      // New OpenChat format - object with name/value
+      subCmd = args[0].name;
+      
+      // Extract other parameters
+      if (args.length > 1) {
+        const idArg = args.find(arg => arg.name === 'id');
+        const titleArg = args.find(arg => arg.name === 'title');
+        const contentArg = args.find(arg => arg.name === 'content');
+        
+        if (idArg && idArg.value) params.push(idArg.value);
+        if (titleArg && titleArg.value) params.push(titleArg.value);
+        if (contentArg && contentArg.value) params.push(contentArg.value);
+      }
+    } else {
+      // Old format - just strings
+      subCmd = args[0];
+      params = args.slice(1);
+    }
+  }
+  
+  // If no subcommand, show all announcements
+  if (!subCmd) {
     const announcementList = Array.from(announcements.values())
       .sort((a, b) => b.createdAt - a.createdAt)
       .map(a => {
@@ -792,30 +842,32 @@ function handleAnnouncements(userId, args) {
           .map(([r, count]) => `${r} ${count}`)
           .join(' ');
         
-        return `📢 **${a.title}**\n${a.content}\n\n${reactionText}\n💬 ${a.comments.length} comments\n\nUse /pingpair announce view ${a.id} to view details`;
+        return `📢 **${a.title}**\n${a.content}\n\n${reactionText}\n💬 ${a.comments.length} comments\n\nUse \`/pingpair announce view id:${a.id}\` to view details`;
       })
       .join('\n\n');
     
     return {
-      text: `📢 **Community Announcements**\n\n${announcementList || 'No announcements yet'}\n\nUse /pingpair announce create [title] [content] to create a new announcement`
+      text: `📢 **Community Announcements**\n\n${announcementList || 'No announcements yet'}\n\nUse \`/pingpair announce create title:"Your Title" content:"Your announcement"\` to create a new announcement`
     };
   }
   
   // Handle subcommands
-  const subCmd = args[0];
-  
-  if (subCmd === 'create' && args.length > 2) {
-    const title = args[1];
-    const content = args.slice(2).join(' ');
+  if (subCmd === 'create' && params.length >= 2) {
+    const title = params[0];
+    const content = params.slice(1).join(' ');
     const announcement = createAnnouncement(title, content);
     
+    // Award points for creating an announcement
+    user.strixPoints = (user.strixPoints || 0) + 5;
+    users.set(userId, user);
+    
     return {
-      text: `📢 **New Announcement Created**\n\nTitle: ${announcement.title}\nContent: ${announcement.content}\n\n✨ Earn 5 Strix Points for creating an announcement!`
+      text: `📢 **New Announcement Created**\n\n**Title:** ${announcement.title}\n**Content:** ${announcement.content}\n\n✨ Earned 5 Strix Points for creating an announcement! (Total: ${user.strixPoints})`
     };
   }
   
-  if (subCmd === 'view' && args.length > 1) {
-    const id = parseInt(args[1]);
+  if (subCmd === 'view' && params.length >= 1) {
+    const id = parseInt(params[0]);
     const announcement = announcements.get(id);
     
     if (!announcement) {
@@ -840,13 +892,13 @@ function handleAnnouncements(userId, args) {
       .join(' ');
     
     return {
-      text: `📢 **${announcement.title}**\n\n${announcement.content}\n\n${reactionText}\n\n💬 **Comments**\n${comments || 'No comments yet'}\n\nUse /pingpair announce comment ${id} [content] to add a comment`
+      text: `📢 **${announcement.title}**\n\n${announcement.content}\n\n${reactionText || 'No reactions yet'}\n\n💬 **Comments**\n${comments || 'No comments yet'}\n\nUse \`/pingpair announce comment id:${id} content:"Your comment"\` to add a comment`
     };
   }
   
-  if (subCmd === 'comment' && args.length > 2) {
-    const id = parseInt(args[1]);
-    const content = args.slice(2).join(' ');
+  if (subCmd === 'comment' && params.length >= 2) {
+    const id = parseInt(params[0]);
+    const content = params.slice(1).join(' ');
     const comment = addComment(id, userId, content);
     
     if (!comment) {
@@ -855,14 +907,18 @@ function handleAnnouncements(userId, args) {
       };
     }
     
+    // Award points for commenting
+    user.strixPoints = (user.strixPoints || 0) + 2;
+    users.set(userId, user);
+    
     return {
-      text: `💬 **Comment Added**\n\n${content}\n\n✨ Earn 2 Strix Points for commenting!`
+      text: `💬 **Comment Added**\n\n${content}\n\n✨ Earned 2 Strix Points for commenting! (Total: ${user.strixPoints})`
     };
   }
   
-  if (subCmd === 'react' && args.length > 2) {
-    const id = parseInt(args[1]);
-    const reaction = args[2];
+  if (subCmd === 'react' && params.length >= 2) {
+    const id = parseInt(params[0]);
+    const reaction = params[1];
     const success = addReaction(id, userId, reaction);
     
     if (!success) {
@@ -871,18 +927,17 @@ function handleAnnouncements(userId, args) {
       };
     }
     
+    // Award points for reacting
+    user.strixPoints = (user.strixPoints || 0) + 1;
+    users.set(userId, user);
+    
     return {
-      text: `✨ Added reaction ${reaction} to the announcement!`
+      text: `✨ Reaction added: ${reaction}\n\nEarned 1 Strix Point! (Total: ${user.strixPoints})`
     };
   }
   
   return {
-    text: `📢 **Announcement Commands**\n\n` +
-          `/pingpair announce - View all announcements\n` +
-          `/pingpair announce create [title] [content] - Create new announcement\n` +
-          `/pingpair announce view [id] - View announcement details\n` +
-          `/pingpair announce comment [id] [content] - Add a comment\n` +
-          `/pingpair announce react [id] [reaction] - Add a reaction`
+    text: `📢 **Announcement Commands**\n\n- \`/pingpair announce\` - View all announcements\n- \`/pingpair announce create title:"Title" content:"Content"\` - Create a new announcement\n- \`/pingpair announce view id:1\` - View announcement details\n- \`/pingpair announce comment id:1 content:"Comment"\` - Add a comment\n- \`/pingpair announce react id:1 reaction:👍\` - Add a reaction`
   };
 }
 
@@ -2131,26 +2186,45 @@ function handleLeaderboard(userId) {
 
 // Add new command for blockchain news
 function handleBlockchainNews(userId, args) {
+  console.log('Blockchain News command:', JSON.stringify(args));
+  
+  // Create user if they don't exist
   if (!users.has(userId)) {
-    return handleStart(userId);
+    users.set(userId, createUser(userId));
   }
   
   const user = users.get(userId);
   user.lastActive = Date.now();
   
+  // Process args - handle both old format (string array) and new format (object array)
+  let country = '';
+  
+  if (args && args.length > 0) {
+    // Check if we have the new format (objects with name/value)
+    if (typeof args[0] === 'object' && args[0] !== null) {
+      // New OpenChat format - object with name/value
+      const countryArg = args.find(arg => arg.name === 'country' || arg.name === 'region');
+      if (countryArg && countryArg.value) {
+        country = countryArg.value;
+      }
+    } else {
+      // Old format - just strings
+      country = args.join(' ');
+    }
+  }
+  
   // If no country specified, show all countries
-  if (!args || args.length === 0) {
+  if (!country) {
     const countryList = Object.entries(blockchainNews)
       .map(([code, data]) => `${data.flag} ${data.name}`)
       .join('\n');
     
     return {
-      text: `🌐 **Blockchain News by Country**\n\n${countryList}\n\nUse /pingpair blockchain [country] to get latest news`
+      text: `🌐 **Blockchain News by Country**\n\n${countryList}\n\nUse \`/pingpair blockchain country:[country]\` to get latest news`
     };
   }
   
   // Get news for specific country
-  const country = args.join(' ');
   const countryData = Object.values(blockchainNews).find(c => 
     c.name.toLowerCase() === country.toLowerCase()
   );
@@ -2165,8 +2239,12 @@ function handleBlockchainNews(userId, args) {
   const fact = countryData.facts[Math.floor(Math.random() * countryData.facts.length)];
   const sources = countryData.sources.join('\n');
   
+  // Award Strix points for reading news
+  user.strixPoints = (user.strixPoints || 0) + 5;
+  users.set(userId, user);
+  
   return {
-    text: `📰 **Blockchain News: ${countryData.flag} ${countryData.name}**\n\n💡 Did you know?\n${fact}\n\n🔍 Latest news sources:\n${sources}\n\n✨ Earn 5 Strix Points for reading blockchain news!`
+    text: `📰 **Blockchain News: ${countryData.flag} ${countryData.name}**\n\n💡 Did you know?\n${fact}\n\n🔍 Latest news sources:\n${sources}\n\n✨ Earned 5 Strix Points for reading blockchain news! (Total: ${user.strixPoints})`
   };
 }
 
