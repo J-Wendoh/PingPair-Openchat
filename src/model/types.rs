@@ -13,6 +13,9 @@ pub struct UserProfile {
     pub net_worth: u32,
     pub badges: Vec<Badge>,
     pub countries_visited: Vec<String>,
+    pub timezone: String,
+    pub languages: Vec<String>,
+    pub join_date: u64,
 }
 
 // Country Information
@@ -21,6 +24,13 @@ pub struct Country {
     pub name: String,
     pub fun_facts: Vec<String>,
     pub continent: String,
+    pub flag: String,
+    pub traditions: Vec<String>,
+    pub languages: Vec<String>,
+    pub available: bool,
+    pub population: u64,
+    pub capital: String,
+    pub currency: String,
 }
 
 // Badge System

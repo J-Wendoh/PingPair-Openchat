@@ -1,7 +1,7 @@
 use oc_bots_sdk::api::command::CommandHandler;
 use oc_bots_sdk::api::command::SuccessResult;
 use oc_bots_sdk::api::command::EphemeralMessageBuilder;
-use oc_bots_sdk::api::definition::BotCommandDefinition;
+use oc_bots_sdk::api::definition::*;
 use oc_bots_sdk::oc_api::client::Client;
 use oc_bots_sdk::types::{BotCommandContext, MessageContentInitial, MessageId, TextContent};
 use oc_bots_sdk_offchain::AgentRuntime;
@@ -71,7 +71,41 @@ impl PingPairCommand {
             name: String::from("pingpair"),
             description: Some(String::from("Connect with people globally through themed meetups")),
             placeholder: Some(String::from("command")),
-            params: vec![],
+            params: vec![
+                BotCommandParam {
+                    name: "subcommand".to_string(),
+                    description: Some("The subcommand to execute".to_string()),
+                    placeholder: Some("Choose a command".to_string()),
+                    required: true,
+                    param_type: BotCommandParamType::StringParam(StringParam {
+                        min_length: 1,
+                        max_length: 50,
+                        choices: vec![
+                            CommandOptionChoiceString {
+                                name: "Start".to_string(),
+                                value: "start".to_string(),
+                            },
+                            CommandOptionChoiceString {
+                                name: "Profile".to_string(),
+                                value: "profile".to_string(),
+                            },
+                            CommandOptionChoiceString {
+                                name: "Skip".to_string(),
+                                value: "skip".to_string(),
+                            },
+                            CommandOptionChoiceString {
+                                name: "Stats".to_string(),
+                                value: "stats".to_string(),
+                            },
+                            CommandOptionChoiceString {
+                                name: "Timezone".to_string(),
+                                value: "timezone".to_string(),
+                            },
+                        ],
+                        multi_line: false,
+                    }),
+                },
+            ],
             permissions: Default::default(),
             default_role: None,
             direct_messages: Some(true),
